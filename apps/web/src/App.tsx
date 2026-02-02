@@ -19,6 +19,7 @@ import { TopicDetailPage } from './pages/TopicDetailPage';
 import { HomePage } from './pages/HomePage';
 import { CompetitionsPage } from './pages/CompetitionsPage';
 import { CompetitionDetailPage } from './pages/CompetitionDetailPage';
+import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
     const { user, loading } = useAuthStore(state => ({
@@ -51,6 +52,7 @@ function App() {
     }
 
     return (
+        <>
         <Routes>
             {/* Public Routes */}
             <Route path="/" element={user ? <Navigate to="/feed" replace /> : <LandingPage />} />
@@ -206,6 +208,8 @@ function App() {
                 }
             />
         </Routes>
+        <ScrollToTop />
+        </>
     );
 }
 
