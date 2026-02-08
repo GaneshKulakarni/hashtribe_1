@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Github, FileText, Heart, Twitter, Linkedin, Mail,ChevronRight, Globe, Shield, Code } from 'lucide-react';
+import { Github, FileText, Heart, Twitter, Linkedin, Mail, ChevronRight, Globe, Shield, Code } from 'lucide-react';
 
 export function Footer() {
     const quickLinks = [
@@ -153,7 +153,7 @@ export function Footer() {
                             {['Privacy Policy', 'Terms of Service', 'Cookie Policy', 'Code of Conduct'].map((item) => (
                                 <a
                                     key={item}
-                                    href="#"
+                                    href={`/${item.toLowerCase().replace(/\s+/g, '-')}`}
                                     className="text-xs text-grey-600 hover:text-grey-400 transition-colors"
                                 >
                                     {item}
