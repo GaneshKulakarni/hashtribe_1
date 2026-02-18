@@ -68,9 +68,9 @@ export function Footer() {
                             </a>
                             <a
                                 href="/terms"
-                                className="text-sm text-grey-400 hover:text-white transition-colors block"
+                                className="flex items-center gap-2 text-sm text-grey-400 hover:text-white transition-colors"
                             >
-                              <notebookText className="w-4 h-4" />
+                                <FileText className="w-4 h-4" />
                                 Terms of Service
                             </a>
                         </nav>

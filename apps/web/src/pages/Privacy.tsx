@@ -5,110 +5,127 @@ const Privacy = () => {
         <header className="mb-12 border-b border-zinc-800 pb-6">
           <h1 className="text-3xl font-bold text-white">Privacy Policy</h1>
           <p className="text-sm mt-2 text-zinc-500 font-mono">
-            HASH_VERSION: 2026.01.v3
+            HASH_VERSION: 2026.02.v3
           </p>
         </header>
 
-        <section className="space-y-12">
+        <section className="space-y-10">
+          {/* 01 */}
           <div>
             <h2 className="text-lg font-bold text-white uppercase tracking-wider mb-3">
-              01. Data Sources
+              01. Data Transmission
             </h2>
             <p>
-              HashTribe analyzes publicly available developer data from platforms
-              such as GitHub and GitLab to establish credibility signals. We never
-              access private repositories, private commits, or non-public activity.
+              HashTribe analyzes publicly available developer activity such as
+              GitHub or GitLab metadata to help establish credibility within the
+              platform. We never access or store private repositories or source
+              code.
+            </p>
+            <p className="mt-2">
+              Indexed data may include commit frequency, language distribution,
+              pull request impact, and contribution timelines — strictly at a
+              metadata level.
             </p>
           </div>
 
+          {/* 02 */}
           <div>
             <h2 className="text-lg font-bold text-white uppercase tracking-wider mb-3">
-              02. Data Indexed
+              02. Identity & Accounts
             </h2>
             <p>
-              We index high-level metadata only — including commit frequency,
-              repository activity, language distribution, pull request impact,
-              and contribution consistency. Source code contents are never stored
-              or replicated within our systems.
+              Account authentication and identity management are handled through
+              secure third-party infrastructure (such as Supabase). Passwords
+              are never stored in plain text.
+            </p>
+            <p className="mt-2">
+              Your profile represents a developer persona, not a surveillance
+              target. We collect only what is required for platform integrity.
             </p>
           </div>
 
+          {/* 03 */}
           <div>
             <h2 className="text-lg font-bold text-white uppercase tracking-wider mb-3">
-              03. Identity & Profiles
+              03. Tribe Interaction
             </h2>
             <p>
-              Your HashTribe profile represents a verifiable developer identity.
-              Proof-based metrics are public by default to promote transparency,
-              while optional profile elements can be customized or hidden by you
-              at any time.
+              Activity inside Tribes (posts, discussions, reactions) is visible
+              to other Tribe members. Transparency is a core principle of the
+              HashTribe ecosystem.
+            </p>
+            <p className="mt-2">
+              Proof-based metrics and reputation indicators are public by
+              default unless explicitly stated otherwise.
             </p>
           </div>
 
+          {/* 04 */}
           <div>
             <h2 className="text-lg font-bold text-white uppercase tracking-wider mb-3">
-              04. Tribe Visibility
+              04. Cookies & Sessions
             </h2>
             <p>
-              Interactions within Tribes — including discussions, reputation
-              signals, and collaboration metrics — are visible to Tribe members.
-              This visibility is fundamental to maintaining trust within the
-              ecosystem.
+              HashTribe uses cookies and local storage primarily for session
+              persistence, authentication state, and basic analytics.
+            </p>
+            <p className="mt-2">
+              We do not use invasive tracking, ad profiling, or cross-site
+              behavioral monitoring.
             </p>
           </div>
 
+          {/* 05 */}
           <div>
             <h2 className="text-lg font-bold text-white uppercase tracking-wider mb-3">
-              05. Authentication
+              05. Security
             </h2>
             <p>
-              Authentication is handled through secure third-party providers
-              (e.g. OAuth). HashTribe does not store passwords. Authorization
-              tokens are encrypted and scoped to minimum required permissions.
+              All data is encrypted in transit and at rest. Industry-standard
+              security practices are applied across the platform.
+            </p>
+            <p className="mt-2">
+              While we explore decentralized identity and privacy-preserving
+              technologies, no system can guarantee absolute security.
             </p>
           </div>
 
+          {/* 06 */}
           <div>
             <h2 className="text-lg font-bold text-white uppercase tracking-wider mb-3">
-              06. Analytics
+              06. Data Control
             </h2>
             <p>
-              We collect minimal, anonymized usage analytics to improve product
-              performance and usability. These metrics cannot be used to
-              personally identify you.
+              You may request access, correction, or deletion of your account
+              data at any time. We believe developers should retain agency over
+              their digital identity.
             </p>
           </div>
 
+          {/* 07 */}
           <div>
             <h2 className="text-lg font-bold text-white uppercase tracking-wider mb-3">
-              07. Data Security
+              07. Third-Party Services
             </h2>
             <p>
-              All data is encrypted in transit and at rest. Where possible,
-              decentralized identity and verifiable credential standards are
-              used to reduce centralized data exposure.
+              HashTribe integrates with external services strictly for
+              authentication, hosting, and analytics. These services are bound
+              by their own privacy policies.
             </p>
           </div>
 
+          {/* 08 */}
           <div>
             <h2 className="text-lg font-bold text-white uppercase tracking-wider mb-3">
-              08. Data Retention
+              08. Policy Mutations
             </h2>
             <p>
-              Data is retained only as long as necessary to provide core
-              functionality. You may request profile deletion, after which
-              associated personal data is permanently removed from our systems.
+              This policy may evolve as HashTribe grows. Any material changes
+              will be reflected by an updated hash version.
             </p>
-          </div>
-
-          <div>
-            <h2 className="text-lg font-bold text-white uppercase tracking-wider mb-3">
-              09. Policy Evolution
-            </h2>
-            <p>
-              HashTribe is an evolving protocol. Privacy practices may be updated
-              as the platform grows. Significant changes will be communicated
-              transparently through versioned updates.
+            <p className="mt-2">
+              Continued use of the platform implies acceptance of the latest
+              revision.
             </p>
           </div>
         </section>
