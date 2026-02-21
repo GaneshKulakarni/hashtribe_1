@@ -14,7 +14,8 @@ INSERT INTO public.tribes (name, slug, description, visibility, created_by) VALU
   ('TypeScript Masters', 'typescript-masters-def456', 'Deep dive into TypeScript best practices', 'public', (SELECT id FROM auth.users LIMIT 1)),
   ('Open Source Contributors', 'open-source-contributors-ghi789', 'Collaborate on open source projects', 'public', (SELECT id FROM auth.users LIMIT 1)),
   ('Web3 Builders', 'web3-builders-jkl012', 'Building the decentralized future', 'private', (SELECT id FROM auth.users LIMIT 1)),
-  ('DevOps Engineers', 'devops-engineers-mno345', 'Infrastructure, CI/CD, and cloud technologies', 'public', (SELECT id FROM auth.users LIMIT 1))
+  ('DevOps Engineers', 'devops-engineers-mno345', 'Infrastructure, CI/CD, and cloud technologies', 'public', (SELECT id FROM auth.users LIMIT 1)),
+  ('HashTribe Test Lab', 'hashtribe-test-lab-xyz001', 'Sandbox tribe for testing emoji and image posts', 'public', (SELECT id FROM auth.users LIMIT 1))
 ON CONFLICT (slug) DO NOTHING;
 
 -- Sample Topics (will be created after tribes exist)
@@ -38,6 +39,60 @@ INSERT INTO public.topics (tribe_id, title, content, created_by) VALUES
     (SELECT id FROM auth.users LIMIT 1)
   )
 ON CONFLICT DO NOTHING;
+
+INSERT INTO public.posts (id, tribe_id, user_id, content, image_urls, parent_id, likes_count, replies_count, reposts_count)
+SELECT
+  '8b6f6f41-9d4c-4a1c-9f23-9c8c9a6a9d01'::uuid,
+  t.id,
+  u.id,
+  'Testing emojis 😀🔥 — this is the main post for image/emoji validation.',
+  ARRAY['https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80'],
+  NULL,
+  0,
+  2,
+  0
+FROM (SELECT id FROM public.tribes WHERE slug = 'hashtribe-test-lab-xyz001' LIMIT 1) t
+CROSS JOIN (SELECT id FROM auth.users LIMIT 1) u
+UNION ALL
+SELECT
+  'f0c6a8c9-3b8a-4b2c-9c1d-0d6f9a5b3f11'::uuid,
+  t.id,
+  u.id,
+  'Reply: image renders and emoji picker works 👍',
+  NULL,
+  '8b6f6f41-9d4c-4a1c-9f23-9c8c9a6a9d01'::uuid,
+  0,
+  0,
+  0
+FROM (SELECT id FROM public.tribes WHERE slug = 'hashtribe-test-lab-xyz001' LIMIT 1) t
+CROSS JOIN (SELECT id FROM auth.users LIMIT 1) u
+UNION ALL
+SELECT
+  'c2f4e6e1-7a8b-4b0f-8b21-6c7b9c1a2d22'::uuid,
+  t.id,
+  u.id,
+  'Reply: emojis ✅🚀 inserted correctly.',
+  NULL,
+  '8b6f6f41-9d4c-4a1c-9f23-9c8c9a6a9d01'::uuid,
+  0,
+  0,
+  0
+FROM (SELECT id FROM public.tribes WHERE slug = 'hashtribe-test-lab-xyz001' LIMIT 1) t
+CROSS JOIN (SELECT id FROM auth.users LIMIT 1) u
+UNION ALL
+SELECT
+  'c9b7c0b3-2c45-4e14-8f17-31b7a3c0a901'::uuid,
+  t.id,
+  u.id,
+  'Second post without image to verify text-only flow.',
+  NULL,
+  NULL,
+  0,
+  0,
+  0
+FROM (SELECT id FROM public.tribes WHERE slug = 'hashtribe-test-lab-xyz001' LIMIT 1) t
+CROSS JOIN (SELECT id FROM auth.users LIMIT 1) u
+ON CONFLICT (id) DO NOTHING;
 
 -- Sample Competitions
 INSERT INTO public.competitions (title, slug, description, difficulty, status, start_time, end_time, created_by) VALUES

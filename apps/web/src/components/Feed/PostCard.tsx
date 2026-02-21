@@ -64,11 +64,23 @@ export function PostCard({ post, onLike, onDelete, showTribe = false }: PostCard
                     {post.content}
                 </p>2 text-grey-200 whitespace-pre-wrap break-words text-base leading-relaxed
 
-                {/* Attachments (Placeholder logic) */}
+                {/* Attachments */}
                 {post.image_urls && post.image_urls.length > 0 && (
-                    <div className="mt-3 rounded-2xl overflow-hidden border border-charcoal-700/60 hover:border-charcoal-600 transition-colors duration-200">
-                        {/* Simple grid for multiple images would go here */}
-                        <img src={post.image_urls[0]} alt="Post attachment" className="w-full h-auto max-h-96 object-cover" />
+                    <div className={clsx(
+                        "mt-3 rounded-2xl overflow-hidden border border-charcoal-700/60 hover:border-charcoal-600 transition-colors duration-200",
+                        post.image_urls.length === 1 ? "" : "grid grid-cols-2 gap-1"
+                    )}>
+                        {post.image_urls.map((url, index) => (
+                            <img 
+                                key={index}
+                                src={url} 
+                                alt={`Post attachment ${index + 1}`} 
+                                className={clsx(
+                                    "w-full h-auto object-cover",
+                                    post.image_urls!.length === 1 ? "max-h-96" : "h-48"
+                                )} 
+                            />
+                        ))}
                     </div>
                 )}
 

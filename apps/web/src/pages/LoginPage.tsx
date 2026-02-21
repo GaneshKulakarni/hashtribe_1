@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { Globe } from '@/components/Globe';
@@ -10,8 +10,6 @@ import nfksIcon from '@/components/assets/nfks_logo.png';
 export function LoginPage() {
     const { user, signInWithGitHub, signInWithGoogle, signInWithEmail, loading } = useAuthStore();
     const navigate = useNavigate();
-    const location = useLocation();
-
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [emailLoading, setEmailLoading] = useState(false);
