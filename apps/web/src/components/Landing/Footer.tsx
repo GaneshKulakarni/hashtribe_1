@@ -136,6 +136,30 @@ export function Footer() {
                         A <span className="text-white font-semibold">nFKs</span> Affiliate
                     </p>
                 </div>
+                <span className="text-2xl font-bold text-white font-display tracking-tight">
+                  HashTribe
+                </span>
+              </div>
+            </Link>
+
+            <p className="text-grey-400 max-w-md">
+              A developer-first platform for building credibility, collaborating on projects,
+              and connecting with the global developer community.
+            </p>
+
+            {/* Newsletter */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-white">Stay Updated</h4>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  placeholder="Your email"
+                  className="flex-1 px-4 py-2 rounded-lg bg-charcoal-900 border border-charcoal-800 text-white placeholder-grey-600 focus:outline-none focus:border-primary-500"
+                />
+                <button className="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors">
+                  Subscribe
+                </button>
+              </div>
             </div>
         </footer>
     );
