@@ -96,6 +96,39 @@ See [SCOPE.md](SCOPE.md) for the complete product vision including:
 
 ---
 
+## 🗺️ System Architecture
+
+HashTribe operates as a unified monorepo where the frontend and shared logic are tightly coupled, protected by Supabase's identity-aware security layer.
+
+### 🔷 Monorepo & Data Flow
+```mermaid
+graph TD
+    subgraph "pnpm Monorepo Workspaces"
+        WEB[apps/web - React + Vite]
+        SHARED[packages/shared - TS Types & Utils]
+        WEB -.->|Imports| SHARED
+    end
+
+    subgraph "Supabase Cloud / Local"
+        AUTH[GitHub OAuth]
+        DB[(PostgreSQL)]
+        RLS{Row Level Security}
+        
+        AUTH -->|JWT Session| WEB
+        WEB -->|Client Query| RLS
+        RLS -->|Validates Policy| DB
+        DB -->|Returns Data| WEB
+    end
+
+    subgraph "Tribes Permission Model"
+        DB --> T[Tribes Table]
+        DB --> M[Members Table]
+        RLS -.->|Checks| M
+    end
+```
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -242,6 +275,12 @@ http://localhost:5173
 
 ## 📁 Project Structure
 
+This project uses **pnpm workspaces** to share code between the frontend and potential future packages (like a CLI or mobile app).
+
+* **`apps/web`**: The main React application. It handles all UI and user interactions.
+* **`packages/shared`**: The single source of truth for TypeScript interfaces and validation logic used by both the frontend and database types.
+* **`supabase/`**: Contains the "Backend-as-a-Code." If you want to change how Tribes work, you likely need to edit the SQL migrations here.
+
 ```
 HashTribe/
 ├── 📁 apps/
@@ -299,6 +338,25 @@ Key tables:
 - `competition_participants` - Competition entries (Phase 1)
 
 See `supabase/migrations/` for complete schema and RLS policies.
+
+### 🔐 Join Tribe Logic (Security Flow)
+To ensure the integrity of private Tribes, the following flow is enforced by RLS:
+
+```mermaid
+sequenceDiagram
+    participant User as Developer (Web App)
+    participant Supabase as Supabase RLS
+    participant DB as PostgreSQL
+
+    User->>Supabase: Request to Join Private Tribe
+    Supabase->>Supabase: Check JWT (is user logged in?)
+    Supabase->>DB: Check invite_code or Tribe status
+    alt is_public OR valid_invite
+        DB-->>User: 200 OK (Member Added)
+    else unauthorized
+        DB-->>User: 403 Forbidden (RLS Blocked)
+    end
+```
 
 ---
 
