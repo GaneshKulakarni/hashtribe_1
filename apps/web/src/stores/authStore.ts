@@ -120,7 +120,12 @@ export const useAuthStore = create<AuthState>()(
                         initialized: true,
                     });
 
-                    // Set up auth state change listener
+                    // ── Set up auth state change listener ───────────────────────────────
+                    // Guard: track which user IDs have had their GitHub data synced this
+                    // session so we don't fire the heavy sync on every SIGNED_IN event
+                    // (which triggers on tab focus, token refresh, etc.)
+                    const githubSyncedForUser = new Set<string>();
+
                     const authManager = AuthSubscriptionManager.getInstance();
                     authManager.subscribe(async (event: string, session: Session | null) => {
                         console.log('Auth event:', event);
@@ -155,23 +160,32 @@ export const useAuthStore = create<AuthState>()(
                                 }, 1000);
                             }
 
-                            // Enhance profile with GitHub data if signing in with GitHub
-                            if (event === 'SIGNED_IN' && session.user.app_metadata?.provider === 'github') {
+                            // ── GitHub sync: only once per user per session ──────────────────
+                            // SIGNED_IN fires on every token refresh/tab focus so we must guard
+                            const isGitHubUser = session.user.app_metadata?.provider === 'github';
+                            const alreadySynced = githubSyncedForUser.has(session.user.id);
+
+                            if (event === 'SIGNED_IN' && isGitHubUser && !alreadySynced) {
+                                githubSyncedForUser.add(session.user.id); // mark as syncing
                                 setTimeout(async () => {
-                                    const githubService = GitHubService.getInstance();
-                                    const success = await githubService.updateUserProfileWithGitHubData();
+                                    try {
+                                        const githubService = GitHubService.getInstance();
+                                        const success = await githubService.updateUserProfileWithGitHubData();
 
-                                    if (success) {
-                                        // Refresh profile after GitHub enhancement
-                                        const { data: updatedProfile } = await supabase
-                                            .from('users')
-                                            .select('*')
-                                            .eq('id', session.user.id)
-                                            .single();
+                                        if (success) {
+                                            // Refresh profile after GitHub enhancement
+                                            const { data: updatedProfile } = await supabase
+                                                .from('users')
+                                                .select('*')
+                                                .eq('id', session.user.id)
+                                                .single();
 
-                                        if (updatedProfile) {
-                                            set({ profile: updatedProfile });
+                                            if (updatedProfile) {
+                                                set({ profile: updatedProfile });
+                                            }
                                         }
+                                    } catch (syncErr) {
+                                        console.warn('GitHub sync failed (non-critical):', syncErr);
                                     }
                                 }, 2000); // Wait 2 seconds for profile creation
                             }
@@ -184,6 +198,7 @@ export const useAuthStore = create<AuthState>()(
                             });
                         }
                     });
+
 
                 } catch (error) {
                     console.error('Error initializing auth:', error);

@@ -253,7 +253,12 @@ export const ProfilePage = () => {
                 })
                 .eq('id', p.id)
                 .then(({ error: syncErr }: { error: any }) => {
-                    if (syncErr) console.warn('Counter sync warning:', syncErr.message);
+                    if (syncErr) {
+                        // Silently skip if columns don't exist yet (migration not applied)
+                        if (syncErr.code !== 'PGRST204') {
+                            console.warn('Counter sync warning:', syncErr.message);
+                        }
+                    }
                 });
 
             setProfile(p);
@@ -309,33 +314,41 @@ export const ProfilePage = () => {
     }, [profile?.id]);
 
     // ── Save edits ────────────────────────────────────────────────────────────
-
     async function handleSave() {
-        const { data: { session } } = await supabase.auth.getSession();
-        const currentUserId = session?.user?.id || authUser?.id;
-        if (!currentUserId) return;
+        if (!profile?.id) return;
+
+        const { updateProfile, triggerProfileRefresh } = useAuthStore.getState();
 
         try {
             setSaving(true);
-            const { error } = await (supabase.from('users') as any)
-                .update({
-                    full_name: formData.full_name,
-                    display_name: formData.full_name,
-                    bio: formData.bio,
-                    skills: formData.skills,
-                    badges: formData.badges,
-                })
-                .eq('id', currentUserId);
 
-            if (error) throw error;
+            const profileUpdates = {
+                full_name: formData.full_name,
+                display_name: formData.full_name,
+                bio: formData.bio,
+                skills: formData.skills,
+                badges: formData.badges,
+                updated_at: new Date().toISOString(),
+            };
+
+            await updateProfile(profileUpdates);
+
             setIsEditing(false);
-            getProfile();
-        } catch (err) {
-            console.error('Update failed:', err);
+
+            // Refresh local state (pull from DB)
+            await getProfile();
+
+            // Signal global refresh for other components (counters, name in header, etc)
+            triggerProfileRefresh();
+
+        } catch (err: any) {
+            console.error('Profile update failed:', err);
+            alert(`Failed to save profile: ${err.message || 'Unknown error'}`);
         } finally {
             setSaving(false);
         }
     }
+
 
     // ── Avatar upload ─────────────────────────────────────────────────────────
 
