@@ -398,10 +398,15 @@ export class GitHubService {
   private async storeGitHubRepositories(repositories: GitHubRepository[], userId: string): Promise<void> {
     try {
       // Clear existing repositories for this user
-      await supabase
+      const { error: deleteError } = await supabase
         .from('github_repositories')
         .delete()
         .eq('user_id', userId);
+
+      if (deleteError) {
+        console.error('Error clearing existing GitHub repositories:', deleteError);
+        return; // Abort to prevent partial state
+      }
 
       // Insert new repositories
       const repoData = repositories.map(repo => ({

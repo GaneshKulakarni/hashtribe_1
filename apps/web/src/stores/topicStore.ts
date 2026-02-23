@@ -182,7 +182,7 @@ export const useTopicStore = create<TopicStore>((set, get) => ({
                 comments: ((currentStats as any)?.comments ?? 0) + 1,
             };
 
-            await supabase
+            const { error: updateError } = await supabase
                 .from('users')
                 .update({
                     comments_count: currentComments,
@@ -191,6 +191,9 @@ export const useTopicStore = create<TopicStore>((set, get) => ({
                 })
                 .eq('id', userId);
 
+            if (updateError) {
+                console.error('Error updating user stats:', updateError);
+            }
             // Signal ProfilePage to re-fetch its local profile state from DB
             useAuthStore.getState().triggerProfileRefresh();
 

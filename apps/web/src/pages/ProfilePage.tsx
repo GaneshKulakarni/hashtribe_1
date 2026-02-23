@@ -341,12 +341,15 @@ export const ProfilePage = () => {
 
     async function uploadAvatar(event: React.ChangeEvent<HTMLInputElement>) {
         try {
-            setLoading(true);
             if (!event.target.files?.length) return;
+            if (!authUser?.id) return;
+
+            // Consider a local uploading state instead of full-page loading
+            setLoading(true);
 
             const file = event.target.files[0];
             const fileExt = file.name.split('.').pop();
-            const filePath = `${authUser?.id}/${Date.now()}.${fileExt}`;
+            const filePath = `${authUser.id}/${Date.now()}.${fileExt}`;
 
             const { error: uploadError } = await supabase.storage
                 .from('avatars').upload(filePath, file);
@@ -367,7 +370,6 @@ export const ProfilePage = () => {
             setLoading(false);
         }
     }
-
     // ── Render helpers ────────────────────────────────────────────────────────
 
     const displayName = profile?.full_name || profile?.name || profile?.display_name || profile?.username || '';
@@ -379,15 +381,14 @@ export const ProfilePage = () => {
     // Use activity_stats (live-queried) as primary source; fall back to explicit columns
     // NOTE: activity_stats.tribes/comments/posts are set from real COUNT queries in getProfile
     //       so they are always accurate even for historical data
-    const tribesCount = (stats.tribes ?? 0) || (profile?.tribes_created_count ?? 0);
-    const commentsCount = (stats.comments ?? 0) || (profile?.comments_count ?? 0);
-    const postsCount = (stats.posts ?? 0);
+    const tribesCount = stats.tribes ?? profile?.tribes_created_count ?? 0;
+    const commentsCount = stats.comments ?? profile?.comments_count ?? 0;
+    const postsCount = stats.posts ?? 0;
 
     // Compute live points in case DB column is stale (10 per tribe, 5 per comment, 2 per post)
     const dbPoints = profile?.points_earned ?? profile?.devcom_score ?? 0;
     const computedPoints = tribesCount * 10 + commentsCount * 5 + postsCount * 2;
     const pointsEarned = Math.max(dbPoints, computedPoints);
-
     const followersCount = profile?.followers_count ?? stats.github_followers ?? 0;
     const repoCount = profile?.public_repo_count ?? stats.github_repos ?? 0;
     const githubStars = stats.github_stars ?? 0;

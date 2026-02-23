@@ -61,8 +61,14 @@ export const useTribeStore = create<TribeState>((set, get) => ({
                     is_member: membershipMap.has(tribe.id),
                     user_role: membershipMap.get(tribe.id) || null,
                 }));
+            } else if (tribes) {
+                tribesWithMembership = tribes.map((tribe: any) => ({
+                    ...tribe,
+                    member_count: tribe.tribe_members?.[0]?.count || 0,
+                    is_member: false,
+                    user_role: null,
+                }));
             }
-
             set({ tribes: tribesWithMembership, loading: false });
         } catch (err: any) {
             console.error('Error fetching tribes:', err);
