@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Github, FileText, Heart, ChevronRight, Sparkles, Shield, Globe, Code, MessageSquare, Award, TrendingUp, Rocket } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ChevronRight, Sparkles, Shield, Globe, Rocket } from 'lucide-react';
 
 export function CtaSection() {
     return (

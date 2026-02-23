@@ -67,9 +67,9 @@ export function TribeDetailPage() {
         }
     };
 
-    const handleCreatePost = async (content: string) => {
+    const handleCreatePost = async (content: string, imageUrls?: string[]) => {
         if (!user || !currentTribe) return;
-        await createPost(currentTribe.id, user.id, content);
+        await createPost(currentTribe.id, user.id, content, imageUrls);
     };
 
     const handleCreateTopic = async (title: string, content: string) => {
