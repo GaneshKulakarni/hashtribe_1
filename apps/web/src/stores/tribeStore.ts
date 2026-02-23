@@ -30,81 +30,81 @@ export const useTribeStore = create<TribeState>((set, get) => ({
     error: null,
 
     fetchTribes: async (userId) => {
-    set({ loading: true, error: null });
+        set({ loading: true, error: null });
 
-    try {
-        const { data: tribes, error } = await supabase
-            .from('tribes')
-            .select(`
+        try {
+            const { data: tribes, error } = await supabase
+                .from('tribes')
+                .select(`
                 *,
                 tribe_members!inner(count)
             `)
-            .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false });
 
-        if (error) throw error;
+            if (error) throw error;
 
-        let tribesWithMembership: TribeWithMembership[] = tribes || [];
+            let tribesWithMembership: TribeWithMembership[] = tribes || [];
 
-        if (userId && tribes) {
-            const { data: memberships } = await supabase
-                .from('tribe_members')
-                .select('tribe_id, role')
-                .eq('user_id', userId);
+            if (userId && tribes) {
+                const { data: memberships } = await supabase
+                    .from('tribe_members')
+                    .select('tribe_id, role')
+                    .eq('user_id', userId);
 
-            const membershipMap = new Map(
-                memberships?.map((m: any) => [m.tribe_id, m.role]) || []
-            );
+                const membershipMap = new Map(
+                    memberships?.map((m: any) => [m.tribe_id, m.role]) || []
+                );
 
-            tribesWithMembership = tribes.map((tribe: any) => ({
-                ...tribe,
-                member_count: tribe.tribe_members?.[0]?.count || 0,
-                is_member: membershipMap.has(tribe.id),
-                user_role: membershipMap.get(tribe.id) || null,
-            }));
+                tribesWithMembership = tribes.map((tribe: any) => ({
+                    ...tribe,
+                    member_count: tribe.tribe_members?.[0]?.count || 0,
+                    is_member: membershipMap.has(tribe.id),
+                    user_role: membershipMap.get(tribe.id) || null,
+                }));
+            }
+
+            set({ tribes: tribesWithMembership, loading: false });
+        } catch (err: any) {
+            console.error('Error fetching tribes:', err);
+            set({
+                loading: false,
+                error: err.message || 'Failed to load tribes',
+            });
         }
-
-        set({ tribes: tribesWithMembership, loading: false });
-    } catch (err: any) {
-        console.error('Error fetching tribes:', err);
-        set({
-            loading: false,
-            error: err.message || 'Failed to load tribes',
-        });
-    }
-},
+    },
 
     fetchTribeBySlug: async (slug) => {
-    set({ loading: true, error: null });
+        set({ loading: true, error: null });
 
-    try {
-        const { data: tribe, error } = await supabase
-            .from('tribes')
-            .select('*')
-            .eq('slug', slug)
-            .single();
+        try {
+            const { data: tribe, error } = await supabase
+                .from('tribes')
+                .select('*')
+                .eq('slug', slug)
+                .single();
 
-        if (error) throw error;
+            if (error) throw error;
 
-        set({ currentTribe: tribe });
+            set({ currentTribe: tribe });
 
-        if (tribe) {
-            await get().fetchTribeMembers(tribe.id);
+            if (tribe) {
+                await get().fetchTribeMembers(tribe.id);
+            }
+        } catch (err: any) {
+            console.error('Error fetching tribe:', err);
+            set({ error: err.message || 'Failed to load tribe' });
+        } finally {
+            set({ loading: false });
         }
-    } catch (err: any) {
-        console.error('Error fetching tribe:', err);
-        set({ error: err.message || 'Failed to load tribe' });
-    } finally {
-        set({ loading: false });
-    }
-},
+    },
 
     fetchTribeMembers: async (tribeId) => {
-    set({ loading: true, error: null });
+        set({ loading: true, error: null });
 
-    try {
-        const { data: members, error } = await supabase
-            .from('tribe_members')
-            .select(`
+        try {
+            const { data: members, error } = await supabase
+                .from('tribe_members')
+                .select(`
                 *,
                 users:user_id (
                     username,
@@ -112,54 +112,84 @@ export const useTribeStore = create<TribeState>((set, get) => ({
                     avatar_url
                 )
             `)
-            .eq('tribe_id', tribeId)
-            .order('joined_at', { ascending: false });
+                .eq('tribe_id', tribeId)
+                .order('joined_at', { ascending: false });
 
-        if (error) throw error;
+            if (error) throw error;
 
-        set({ members: members || [] });
-    } catch (err: any) {
-        console.error('Error fetching tribe members:', err);
-        set({ error: err.message || 'Failed to load members' });
-    } finally {
-        set({ loading: false });
-    }
-},
+            set({ members: members || [] });
+        } catch (err: any) {
+            console.error('Error fetching tribe members:', err);
+            set({ error: err.message || 'Failed to load members' });
+        } finally {
+            set({ loading: false });
+        }
+    },
 
     createTribe: async (data) => {
-    set({ loading: true, error: null });
+        set({ loading: true, error: null });
 
-    try {
-        const { generateUniqueSlug } = await import('@hashtribe/shared/utils');
-        const { useAuthStore } = await import('./authStore');
-        const user = useAuthStore.getState().user;
+        try {
+            const { generateUniqueSlug } = await import('@hashtribe/shared/utils');
+            const { useAuthStore } = await import('./authStore');
+            const user = useAuthStore.getState().user;
 
-        if (!user) throw new Error("User must be logged in to create a tribe");
+            if (!user) throw new Error("User must be logged in to create a tribe");
 
-        const slug = generateUniqueSlug(data.name);
+            const slug = generateUniqueSlug(data.name);
 
-        const { data: tribe, error } = await supabase
-            .from('tribes')
-            .insert({
-                ...data,
-                slug,
-                created_by: user.id
-            })
-            .select()
-            .single();
+            const { data: tribe, error } = await supabase
+                .from('tribes')
+                .insert({
+                    ...data,
+                    slug,
+                    created_by: user.id
+                })
+                .select()
+                .single();
 
-        if (error) throw error;
+            if (error) throw error;
 
-        await get().fetchTribes(user.id);
+            // ── Guaranteed client-side increment (works even without DB trigger) ──
+            // First read current values, then write incremented values
+            const { data: currentUser } = await supabase
+                .from('users')
+                .select('tribes_created_count, points_earned, activity_stats')
+                .eq('id', user.id)
+                .single();
 
-        return tribe;
-    } catch (err: any) {
-        set({ error: err.message || 'Failed to create tribe' });
-        throw err;
-    } finally {
-        set({ loading: false });
-    }
-},
+            const currentTribes = (currentUser?.tribes_created_count ?? 0) + 1;
+            const currentPoints = (currentUser?.points_earned ?? 0) + 10;
+            const currentStats = currentUser?.activity_stats ?? {};
+            const mergedStats = {
+                ...currentStats,
+                tribes: ((currentStats as any)?.tribes ?? 0) + 1,
+            };
+
+            await supabase
+                .from('users')
+                .update({
+                    tribes_created_count: currentTribes,
+                    points_earned: currentPoints,
+                    activity_stats: mergedStats,
+                })
+                .eq('id', user.id);
+
+            // Refresh tribes list
+            await get().fetchTribes(user.id);
+
+            // Signal ProfilePage to re-fetch its local profile state from DB
+            useAuthStore.getState().triggerProfileRefresh();
+
+            return tribe;
+        } catch (err: any) {
+            set({ error: err.message || 'Failed to create tribe' });
+            throw err;
+        } finally {
+            set({ loading: false });
+        }
+    },
+
 
 
     joinTribe: async (tribeId, userId) => {

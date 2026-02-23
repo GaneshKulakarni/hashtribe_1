@@ -1,15 +1,44 @@
 export type { Database } from './database.types';
 
-// User Types
+// Activity stats shape (stored as JSONB in DB)
+export interface ActivityStats {
+    posts: number;
+    comments: number;
+    tribes: number;
+    joined_at: string | null;
+    github_connected?: boolean;
+    github_repos?: number;
+    github_followers?: number;
+    github_stars?: number;
+}
+
+// User Types — full profile shape matching the `users` table
 export interface UserProfile {
     id: string;
     username: string;
     display_name: string | null;
+    full_name: string | null;
+    // GitHub identity
+    name: string | null;
+    email: string | null;
     bio: string | null;
     avatar_url: string | null;
-    github_username: string;
-    github_id: number;
+    github_username: string | null;
+    github_id: number | null;
+    // GitHub stats (synced from GitHub API on login)
+    public_repo_count: number;
+    followers_count: number;
+    // Internal platform metrics (auto-updated by DB triggers)
+    comments_count: number;
+    tribes_created_count: number;
+    points_earned: number;
+    // Legacy DevCom score (kept for leaderboard compatibility)
     devcom_score: number;
+    // Skills & badges arrays
+    skills: string[];
+    badges: string[];
+    // Denormalized activity stats JSONB (posts, comments, tribes, github stats)
+    activity_stats: ActivityStats;
     created_at: string;
     updated_at: string;
 }

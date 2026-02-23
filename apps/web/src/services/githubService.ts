@@ -52,9 +52,9 @@ export interface EnhancedGitHubProfile {
 
 export class GitHubService {
   private static instance: GitHubService;
-  
-  private constructor() {}
-  
+
+  private constructor() { }
+
   static getInstance(): GitHubService {
     if (!GitHubService.instance) {
       GitHubService.instance = new GitHubService();
@@ -68,12 +68,12 @@ export class GitHubService {
   private async getGitHubAccessToken(): Promise<string | null> {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session?.provider_token) {
         console.log('No GitHub provider token found');
         return null;
       }
-      
+
       return session.provider_token;
     } catch (error) {
       console.error('Error getting GitHub access token:', error);
@@ -86,7 +86,7 @@ export class GitHubService {
    */
   async fetchGitHubUserData(): Promise<GitHubUserData | null> {
     const accessToken = await this.getGitHubAccessToken();
-    
+
     if (!accessToken) {
       return null;
     }
@@ -117,7 +117,7 @@ export class GitHubService {
    */
   async fetchGitHubRepositories(username: string, perPage: number = 100): Promise<GitHubRepository[]> {
     const accessToken = await this.getGitHubAccessToken();
-    
+
     if (!accessToken) {
       return [];
     }
@@ -164,13 +164,13 @@ export class GitHubService {
    */
   generateSkillsFromGitHub(repos: GitHubRepository[], languages: GitHubLanguageStats): string[] {
     const skills: string[] = [];
-    
+
     // Add top languages as skills
     const topLanguages = Object.entries(languages)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
       .map(([lang]) => lang);
-    
+
     skills.push(...topLanguages);
 
     // Add popular technologies/frameworks based on repo names and topics
@@ -185,7 +185,7 @@ export class GitHubService {
 
     repos.forEach(repo => {
       const repoText = `${repo.name} ${repo.description || ''} ${repo.topics.join(' ')}`.toLowerCase();
-      
+
       techKeywords.forEach(keyword => {
         if (repoText.includes(keyword) && !skills.includes(keyword)) {
           skills.push(keyword);
@@ -236,7 +236,7 @@ export class GitHubService {
    */
   async fetchEnhancedGitHubProfile(): Promise<EnhancedGitHubProfile | null> {
     const userData = await this.fetchGitHubUserData();
-    
+
     if (!userData) {
       return null;
     }
@@ -248,13 +248,13 @@ export class GitHubService {
       ]);
 
       const topLanguages = Object.entries(languageStats)
-        .sort(([,a], [,b]) => b - a)
+        .sort(([, a], [, b]) => b - a)
         .slice(0, 5)
         .map(([lang]) => lang);
 
       const skills = this.generateSkillsFromGitHub(repositories, languageStats);
       const achievements = this.generateAchievementsFromGitHub(userData, repositories);
-      
+
       const totalStars = repositories.reduce((sum, repo) => sum + repo.stargazers_count, 0);
       const totalForks = repositories.reduce((sum, repo) => sum + repo.forks_count, 0);
 
@@ -282,44 +282,71 @@ export class GitHubService {
   }
 
   /**
-   * Update user profile with GitHub data
+   * Update user profile with comprehensive GitHub data
+   * Syncs: name, username, avatar, bio, email, public_repo_count, followers_count
+   * Also updates activity_stats JSONB with github_repos, github_followers, github_stars
    */
   async updateUserProfileWithGitHubData(): Promise<boolean> {
     try {
-      const enhancedProfile = await this.fetchEnhancedGitHubProfile();
-      
-      if (!enhancedProfile) {
+      const userData = await this.fetchGitHubUserData();
+
+      if (!userData) {
+        console.warn('No GitHub user data available – skipping profile sync');
         return false;
       }
 
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session?.user) {
         return false;
       }
 
-      // Prepare profile updates
-      const profileUpdates = {
-        full_name: enhancedProfile.user.name || enhancedProfile.user.login,
-        display_name: enhancedProfile.user.name || enhancedProfile.user.login,
-        bio: enhancedProfile.user.bio || `GitHub developer with ${enhancedProfile.user.public_repos} repositories`,
-        avatar_url: enhancedProfile.user.avatar_url,
-        github_username: enhancedProfile.user.login,
-        github_id: enhancedProfile.user.id,
-        skills: enhancedProfile.skills,
-        badges: enhancedProfile.achievements,
-        activity_stats: {
-          posts: 0,
-          comments: 0,
-          tribes: 0,
-          joined_at: enhancedProfile.user.created_at,
-          github_stars: enhancedProfile.totalStars,
-          github_repos: enhancedProfile.user.public_repos,
-          github_followers: enhancedProfile.user.followers
-        }
+      // Compute total stars from repos (best-effort, skip errors)
+      let totalStars = 0;
+      try {
+        const repos = await this.fetchGitHubRepositories(userData.login, 100);
+        totalStars = repos.reduce((sum, r) => sum + r.stargazers_count, 0);
+      } catch (_) { /* ignore */ }
+
+      // Fetch current activity_stats so we can merge without losing other keys
+      const { data: existing } = await supabase
+        .from('users')
+        .select('activity_stats')
+        .eq('id', session.user.id)
+        .single();
+
+      const currentStats: Record<string, unknown> = (existing?.activity_stats as Record<string, unknown>) ?? {};
+
+      const mergedStats = {
+        ...currentStats,
+        github_connected: true,
+        github_repos: userData.public_repos,
+        github_followers: userData.followers,
+        github_stars: totalStars,
       };
 
-      // Update the user profile
+      // All fields requested by the user:
+      // name, username (github_username), avatar_url, bio, email,
+      // public_repo_count, followers_count  +  activity_stats with GitHub section
+      const profileUpdates = {
+        // GitHub identity
+        name: userData.name || userData.login,
+        display_name: userData.name || userData.login,
+        full_name: userData.name || userData.login,
+        email: userData.email || session.user.email,
+        bio: userData.bio
+          || `GitHub developer with ${userData.public_repos} public repos`,
+        avatar_url: userData.avatar_url,
+        github_username: userData.login,
+        github_id: userData.id,
+        // GitHub stats stored as explicit columns
+        public_repo_count: userData.public_repos,
+        followers_count: userData.followers,
+        // Merged activity_stats JSONB
+        activity_stats: mergedStats,
+        updated_at: new Date().toISOString(),
+      };
+
       const { error } = await supabase
         .from('users')
         .update(profileUpdates)
@@ -330,11 +357,79 @@ export class GitHubService {
         return false;
       }
 
-      console.log('Successfully updated user profile with GitHub data');
+      console.log('✅ GitHub profile synced successfully:', userData.login);
       return true;
     } catch (error) {
       console.error('Error in updateUserProfileWithGitHubData:', error);
       return false;
+    }
+  }
+
+  /**
+   * Fetch and store complete GitHub profile data including repositories
+   */
+  async fetchAndStoreCompleteGitHubProfile(): Promise<boolean> {
+    try {
+      const enhancedProfile = await this.fetchEnhancedGitHubProfile();
+
+      if (!enhancedProfile) {
+        return false;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session?.user) {
+        return false;
+      }
+
+      // Store repositories in a separate table for future use
+      await this.storeGitHubRepositories(enhancedProfile.repositories, session.user.id);
+
+      return true;
+    } catch (error) {
+      console.error('Error fetching and storing complete GitHub profile:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Store GitHub repositories in database
+   */
+  private async storeGitHubRepositories(repositories: GitHubRepository[], userId: string): Promise<void> {
+    try {
+      // Clear existing repositories for this user
+      await supabase
+        .from('github_repositories')
+        .delete()
+        .eq('user_id', userId);
+
+      // Insert new repositories
+      const repoData = repositories.map(repo => ({
+        user_id: userId,
+        repo_id: repo.id,
+        name: repo.name,
+        full_name: repo.full_name,
+        description: repo.description,
+        html_url: repo.html_url,
+        language: repo.language,
+        stargazers_count: repo.stargazers_count,
+        forks_count: repo.forks_count,
+        created_at: repo.created_at,
+        updated_at: repo.updated_at,
+        topics: repo.topics,
+        archived: repo.archived,
+        fork: repo.fork
+      }));
+
+      const { error } = await supabase
+        .from('github_repositories')
+        .insert(repoData);
+
+      if (error) {
+        console.error('Error storing GitHub repositories:', error);
+      }
+    } catch (error) {
+      console.error('Error in storeGitHubRepositories:', error);
     }
   }
 }
