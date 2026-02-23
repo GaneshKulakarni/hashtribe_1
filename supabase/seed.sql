@@ -5,6 +5,14 @@
 -- Note: This seed assumes you have at least one user authenticated via GitHub OAuth
 -- The user_id below should be replaced with actual auth.users.id after first login
 
+-- Update existing users with skills and badges for profile testing
+UPDATE public.users 
+SET 
+  skills = ARRAY['React', 'TypeScript', 'Node.js', 'GraphQL', 'Docker'],
+  badges = ARRAY['First Post', 'Top Contributor', 'Mentor', 'Open Source Hero'],
+  activity_stats = '{"posts": 15, "comments": 42, "tribes": 3, "joined_at": "2024-01-15T00:00:00Z"}'::jsonb
+WHERE id = (SELECT id FROM auth.users LIMIT 1);
+
 -- Insert sample users (you'll need to replace these IDs with real ones from auth.users)
 -- For now, we'll create placeholder data that can be updated after first GitHub login
 

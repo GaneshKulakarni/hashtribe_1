@@ -12,6 +12,14 @@ interface UserProfile {
     avatar_url: string;
     devcom_score: number;
     followers_count: number;
+    skills: string[];
+    badges: string[];
+    activity_stats: {
+        posts: number;
+        comments: number;
+        tribes: number;
+        joined_at: string | null;
+    };
 }
 
 export const ProfilePage = () => {
@@ -24,7 +32,9 @@ export const ProfilePage = () => {
 
     const [formData, setFormData] = useState({
         full_name: '',
-        bio: ''
+        bio: '',
+        skills: [] as string[],
+        badges: [] as string[]
     });
 
     useEffect(() => {
@@ -48,7 +58,9 @@ export const ProfilePage = () => {
                 setProfile(userData);
                 setFormData({
                     full_name: userData.full_name || userData.display_name || '',
-                    bio: userData.bio || ''
+                    bio: userData.bio || '',
+                    skills: userData.skills || [],
+                    badges: userData.badges || []
                 });
             }
             if (error) throw error;
@@ -73,7 +85,9 @@ export const ProfilePage = () => {
                 .update({
                     full_name: formData.full_name,
                     bio: formData.bio,
-                    display_name: formData.full_name
+                    display_name: formData.full_name,
+                    skills: formData.skills,
+                    badges: formData.badges
                 })
                 .eq('id', currentUserId); 
 
@@ -194,6 +208,32 @@ export const ProfilePage = () => {
                             )}
                         </div>
 
+                        {/* Skills Editing */}
+                        {isEditing && (
+                            <div className="mt-6">
+                                <h3 className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.3em] mb-4">Skills & Expertise</h3>
+                                <input
+                                    className="w-full bg-zinc-900 border border-zinc-800 text-zinc-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-primary-500 transition-all"
+                                    placeholder="Add skills separated by commas (e.g., React, TypeScript, Node.js)"
+                                    value={formData.skills.join(', ')}
+                                    onChange={(e) => setFormData({ ...formData, skills: e.target.value.split(',').map(s => s.trim()).filter(s => s) })}
+                                />
+                            </div>
+                        )}
+
+                        {/* Badges Editing */}
+                        {isEditing && (
+                            <div className="mt-6">
+                                <h3 className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.3em] mb-4">Achievements</h3>
+                                <input
+                                    className="w-full bg-zinc-900 border border-zinc-800 text-zinc-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-primary-500 transition-all"
+                                    placeholder="Add achievements separated by commas (e.g., First Post, Top Contributor, Mentor)"
+                                    value={formData.badges.join(', ')}
+                                    onChange={(e) => setFormData({ ...formData, badges: e.target.value.split(',').map(s => s.trim()).filter(s => s) })}
+                                />
+                            </div>
+                        )}
+
                         <div className="mt-12 pt-8 border-t border-zinc-800/50 flex justify-center md:justify-start gap-16 text-zinc-100">
                             <div>
                                 <p className="text-4xl font-black">{profile.devcom_score || 0}</p>
@@ -203,6 +243,59 @@ export const ProfilePage = () => {
                                 <p className="text-4xl font-black">{profile.followers_count || 0}</p>
                                 <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-[0.2em] mt-2">Followers</p>
                             </div>
+                        </div>
+
+                        {/* Skills Section */}
+                        {profile.skills && profile.skills.length > 0 && (
+                            <div className="mt-12">
+                                <h3 className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.3em] mb-4">Skills & Expertise</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {profile.skills.map((skill, index) => (
+                                        <span key={index} className="px-3 py-1 bg-primary-600/20 text-primary-400 text-sm rounded-full border border-primary-600/30">
+                                            {skill}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Badges Section */}
+                        {profile.badges && profile.badges.length > 0 && (
+                            <div className="mt-8">
+                                <h3 className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.3em] mb-4">Achievements</h3>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {profile.badges.map((badge, index) => (
+                                        <div key={index} className="p-4 bg-zinc-800/50 rounded-lg border border-zinc-700/50 text-center">
+                                            <div className="text-2xl mb-2">🏆</div>
+                                            <p className="text-zinc-300 text-sm font-medium">{badge}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Activity Stats Section */}
+                        <div className="mt-8">
+                            <h3 className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.3em] mb-4">Community Activity</h3>
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="p-4 bg-zinc-800/30 rounded-lg border border-zinc-700/30 text-center">
+                                    <p className="text-2xl font-bold text-zinc-100">{profile.activity_stats?.posts || 0}</p>
+                                    <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-[0.2em] mt-1">Posts</p>
+                                </div>
+                                <div className="p-4 bg-zinc-800/30 rounded-lg border border-zinc-700/30 text-center">
+                                    <p className="text-2xl font-bold text-zinc-100">{profile.activity_stats?.comments || 0}</p>
+                                    <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-[0.2em] mt-1">Comments</p>
+                                </div>
+                                <div className="p-4 bg-zinc-800/30 rounded-lg border border-zinc-700/30 text-center">
+                                    <p className="text-2xl font-bold text-zinc-100">{profile.activity_stats?.tribes || 0}</p>
+                                    <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-[0.2em] mt-1">Tribes</p>
+                                </div>
+                            </div>
+                            {profile.activity_stats?.joined_at && (
+                                <p className="text-zinc-500 text-sm mt-4 text-center">
+                                    Member since {new Date(profile.activity_stats.joined_at).toLocaleDateString()}
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
