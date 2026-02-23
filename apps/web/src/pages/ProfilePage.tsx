@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
+import { GitHubRepoShowcase } from '@/components/Profile/GitHubRepoShowcase';
 
 interface UserProfile {
     id: string;
@@ -19,7 +20,12 @@ interface UserProfile {
         comments: number;
         tribes: number;
         joined_at: string | null;
+        github_stars?: number;
+        github_repos?: number;
+        github_followers?: number;
     };
+    github_username?: string;
+    github_id?: number;
 }
 
 export const ProfilePage = () => {
@@ -244,6 +250,51 @@ export const ProfilePage = () => {
                                 <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-[0.2em] mt-2">Followers</p>
                             </div>
                         </div>
+
+                        {/* GitHub Stats Section */}
+                        {profile.github_username && (
+                            <div className="mt-12">
+                                <h3 className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.3em] mb-6">GitHub Profile</h3>
+                                <div className="bg-zinc-800/30 rounded-xl border border-zinc-700/30 p-6">
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <img 
+                                            src={`https://github.com/${profile.github_username}.png`} 
+                                            alt="GitHub avatar" 
+                                            className="w-12 h-12 rounded-full border border-zinc-600"
+                                        />
+                                        <div>
+                                            <p className="text-zinc-100 font-bold">@{profile.github_username}</p>
+                                            <a 
+                                                href={`https://github.com/${profile.github_username}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-primary-400 text-sm hover:text-primary-300 transition-colors"
+                                            >
+                                                View on GitHub →
+                                            </a>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
+                                            <p className="text-2xl font-bold text-zinc-100">{profile.activity_stats?.github_repos || 0}</p>
+                                            <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-[0.2em] mt-1">Repos</p>
+                                        </div>
+                                        <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
+                                            <p className="text-2xl font-bold text-zinc-100">{profile.activity_stats?.github_stars || 0}</p>
+                                            <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-[0.2em] mt-1">Stars</p>
+                                        </div>
+                                        <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
+                                            <p className="text-2xl font-bold text-zinc-100">{profile.activity_stats?.github_followers || 0}</p>
+                                            <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-[0.2em] mt-1">Followers</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {/* GitHub Repositories Showcase */}
+                                <GitHubRepoShowcase username={profile.github_username} />
+                            </div>
+                        )}
 
                         {/* Skills Section */}
                         {profile.skills && profile.skills.length > 0 && (

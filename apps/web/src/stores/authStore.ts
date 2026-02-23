@@ -4,6 +4,7 @@ import { supabase as supabaseClient } from '@/lib/supabase';
 const supabase = supabaseClient as any;
 import type { User, Session } from '@supabase/supabase-js';
 import type { UserProfile } from '@hashtribe/shared/types';
+import { GitHubService } from '@/services/githubService';
 
 interface AuthState {
     user: User | null;
@@ -148,6 +149,27 @@ export const useAuthStore = create<AuthState>()(
                                         set({ profile: retryProfile });
                                     }
                                 }, 1000);
+                            }
+
+                            // Enhance profile with GitHub data if signing in with GitHub
+                            if (event === 'SIGNED_IN' && session.user.app_metadata?.provider === 'github') {
+                                setTimeout(async () => {
+                                    const githubService = GitHubService.getInstance();
+                                    const success = await githubService.updateUserProfileWithGitHubData();
+                                    
+                                    if (success) {
+                                        // Refresh profile after GitHub enhancement
+                                        const { data: updatedProfile } = await supabase
+                                            .from('users')
+                                            .select('*')
+                                            .eq('id', session.user.id)
+                                            .single();
+                                        
+                                        if (updatedProfile) {
+                                            set({ profile: updatedProfile });
+                                        }
+                                    }
+                                }, 2000); // Wait 2 seconds for profile creation
                             }
                         } else {
                             set({
