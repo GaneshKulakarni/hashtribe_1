@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Compass, Trophy, LayoutGrid, ChevronDown, Plus, Info, Shield, FileText, Briefcase } from 'lucide-react';
+import { Home, Compass, Trophy, LayoutGrid, ChevronDown, Plus, Info, Shield, FileText, Briefcase, BarChart } from 'lucide-react';
 import { useTribeStore } from '@/stores/tribeStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useState } from 'react';
@@ -11,7 +11,7 @@ export function Sidebar() {
     const [isMyTribesOpen, setIsMyTribesOpen] = useState(true);
 
     // Filter for tribes the user has joined
-    const myTribes = tribes.filter(t => t.is_member).slice(0, 5); 
+    const myTribes = tribes.filter(t => t.is_member).slice(0, 5);
 
     return (
         <aside className="fixed left-0 top-16 bottom-0 w-64 bg-black border-r border-charcoal-800 overflow-y-auto hidden md:flex flex-col z-40">
@@ -21,6 +21,7 @@ export function Sidebar() {
                 <NavItem to="/tribes" icon={<Compass className="w-5 h-5" />} label="Explore Tribes" />
                 <NavItem to="/competitions" icon={<Trophy className="w-5 h-5" />} label="Challenges" />
                 <NavItem to="/leaderboard" icon={<LayoutGrid className="w-5 h-5" />} label="Leaderboard" />
+                <NavItem to="/admin/analytics" icon={<BarChart className="w-5 h-5" />} label="Admin Analytics" />
             </div>
 
             {/* My Tribes Section */}
@@ -72,26 +73,26 @@ export function Sidebar() {
             <div className="p-4 mt-auto">
                 <div className="space-y-1">
                     <h3 className="text-xs font-bold text-grey-500 uppercase tracking-wider mb-2 px-3">Resources</h3>
-                    
-                    <LinkItem 
-                        label="About HashTribe" 
-                        icon={<Info className="w-4 h-4" />} 
-                        path="/about" 
+
+                    <LinkItem
+                        label="About HashTribe"
+                        icon={<Info className="w-4 h-4" />}
+                        path="/about"
                     />
-                    <LinkItem 
-                        label="Careers" 
-                        icon={<Briefcase className="w-4 h-4" />} 
-                        path="/careers" 
+                    <LinkItem
+                        label="Careers"
+                        icon={<Briefcase className="w-4 h-4" />}
+                        path="/careers"
                     />
-                    <LinkItem 
-                        label="Privacy Policy" 
-                        icon={<Shield className="w-4 h-4" />} 
-                        path="/privacy" 
+                    <LinkItem
+                        label="Privacy Policy"
+                        icon={<Shield className="w-4 h-4" />}
+                        path="/privacy"
                     />
-                    <LinkItem 
-                        label="User Terms" 
-                        icon={<FileText className="w-4 h-4" />} 
-                        path="/terms" 
+                    <LinkItem
+                        label="User Terms"
+                        icon={<FileText className="w-4 h-4" />}
+                        path="/terms"
                     />
 
                     <div className="pt-4 px-3">
@@ -130,8 +131,8 @@ function NavItem({ to, icon, label }: { to: string; icon: React.ReactNode; label
  */
 function LinkItem({ label, icon, path }: { label: string; icon: React.ReactNode; path: string }) {
     return (
-        <NavLink 
-            to={path} 
+        <NavLink
+            to={path}
             className={({ isActive }) => clsx(
                 "flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors text-sm",
                 isActive ? "text-white bg-charcoal-900" : "text-grey-500 hover:text-white hover:bg-charcoal-900"
