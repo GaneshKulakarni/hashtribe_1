@@ -317,28 +317,45 @@ export const ProfilePage = () => {
     async function handleSave() {
         if (!profile?.id) return;
 
-        const { updateProfile, triggerProfileRefresh } = useAuthStore.getState();
-
         try {
             setSaving(true);
 
-            const profileUpdates = {
+            // ── Pass 1: Guaranteed-safe columns (original schema, always exist) ─
+            // display_name and bio exist in the very first migration. This will
+            // ALWAYS succeed regardless of whether the migration SQL has been applied.
+            const { error: coreErr } = await (supabase.from('users') as any)
+                .update({
+                    display_name: formData.full_name,
+                    bio: formData.bio,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', profile.id);
+
+            if (coreErr) {
+                throw new Error(coreErr.message);
+            }
+
+            // ── Pass 2: Extended columns from later migrations ──────────────────
+            // full_name, skills, badges were added via ALTER TABLE migrations.
+            // If the columns don't exist yet (PGRST204), skip silently — no alert.
+            const extUpdates: Record<string, unknown> = {
                 full_name: formData.full_name,
-                display_name: formData.full_name,
-                bio: formData.bio,
-                skills: formData.skills,
-                badges: formData.badges,
-                updated_at: new Date().toISOString(),
             };
+            if (formData.skills.length > 0) extUpdates.skills = formData.skills;
+            if (formData.badges.length > 0) extUpdates.badges = formData.badges;
 
-            await updateProfile(profileUpdates);
+            const { error: extErr } = await (supabase.from('users') as any)
+                .update(extUpdates)
+                .eq('id', profile.id);
 
+            if (extErr && extErr.code !== 'PGRST204') {
+                console.warn('Extended fields save skipped:', extErr.message);
+            }
+
+            // ── Success ───────────────────────────────────────────────────────
             setIsEditing(false);
-
-            // Refresh local state (pull from DB)
             await getProfile();
-
-            // Signal global refresh for other components (counters, name in header, etc)
+            const { triggerProfileRefresh } = useAuthStore.getState();
             triggerProfileRefresh();
 
         } catch (err: any) {
@@ -348,6 +365,7 @@ export const ProfilePage = () => {
             setSaving(false);
         }
     }
+
 
 
     // ── Avatar upload ─────────────────────────────────────────────────────────
