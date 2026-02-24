@@ -128,6 +128,8 @@ export const ProfilePage = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [saving, setSaving] = useState(false);
     const [profile, setProfile] = useState<FullUserProfile | null>(null);
+    // true when the migration SQL has been applied and skills/badges columns exist
+    const [extColumnsAvailable, setExtColumnsAvailable] = useState<boolean | null>(null);
 
     const [formData, setFormData] = useState({
         full_name: '',
@@ -190,10 +192,10 @@ export const ProfilePage = () => {
     }, [profileRefreshKey, silentRefetch]);
 
     // ── Fetch profile + live activity counts from source tables ───────────────
-    const getProfile = useCallback(async () => {
+    const getProfile = useCallback(async (silent = false) => {
         if (!username) return;
         try {
-            setLoading(true);
+            if (!silent) setLoading(true);
 
             // 1. Fetch user row
             const { data, error } = await (supabase.from('users') as any)
@@ -240,26 +242,31 @@ export const ProfilePage = () => {
 
             // 4. Write live counts back to DB so counters stay in sync
             //    (fire-and-forget — don't await, so it doesn't slow the page)
-            (supabase.from('users') as any)
-                .update({
-                    tribes_created_count: liveTribes,
-                    comments_count: liveComments,
-                    activity_stats: {
-                        ...p.activity_stats,
-                        tribes: liveTribes,
-                        comments: liveComments,
-                        posts: livePosts,
-                    },
-                })
-                .eq('id', p.id)
-                .then(({ error: syncErr }: { error: any }) => {
-                    if (syncErr) {
-                        // Silently skip if columns don't exist yet (migration not applied)
-                        if (syncErr.code !== 'PGRST204') {
-                            console.warn('Counter sync warning:', syncErr.message);
+            //    Skip entirely if we know extended columns don't exist
+            if (extColumnsAvailable !== false) {
+                (supabase.from('users') as any)
+                    .update({
+                        tribes_created_count: liveTribes,
+                        comments_count: liveComments,
+                        activity_stats: {
+                            ...p.activity_stats,
+                            tribes: liveTribes,
+                            comments: liveComments,
+                            posts: livePosts,
+                        },
+                    })
+                    .eq('id', p.id)
+                    .then(({ error: syncErr }: { error: any }) => {
+                        if (syncErr) {
+                            // Mark columns as unavailable so we don't retry
+                            if (syncErr.message?.includes('column') || syncErr.message?.includes('does not exist')) {
+                                setExtColumnsAvailable(false);
+                            } else if (syncErr.code !== 'PGRST204') {
+                                console.warn('Counter sync warning:', syncErr.message);
+                            }
                         }
-                    }
-                });
+                    });
+            }
 
             setProfile(p);
             setFormData({
@@ -280,6 +287,20 @@ export const ProfilePage = () => {
     useEffect(() => {
         if (username) getProfile();
     }, [username, getProfile]);
+
+    // ── Probe DB once to check if the extended columns exist ──────────────────
+    useEffect(() => {
+        if (!profile?.id || extColumnsAvailable !== null) return;
+        (async () => {
+            const { error } = await (supabase.from('users') as any)
+                .select('skills')
+                .eq('id', profile.id)
+                .limit(1)
+                .single();
+            // PGRST204 = column not found; anything else means it exists (or is an unrelated error)
+            setExtColumnsAvailable(error?.code !== 'PGRST204');
+        })();
+    }, [profile?.id, extColumnsAvailable]);
 
     // ── Real-time subscription — refresh when user data changes ───────────────
 
@@ -320,41 +341,55 @@ export const ProfilePage = () => {
         try {
             setSaving(true);
 
-            // ── Pass 1: Guaranteed-safe columns (original schema, always exist) ─
-            // display_name and bio exist in the very first migration. This will
-            // ALWAYS succeed regardless of whether the migration SQL has been applied.
-            const { error: coreErr } = await (supabase.from('users') as any)
-                .update({
-                    display_name: formData.full_name,
-                    bio: formData.bio,
-                    updated_at: new Date().toISOString(),
-                })
-                .eq('id', profile.id);
-
-            if (coreErr) {
-                throw new Error(coreErr.message);
-            }
-
-            // ── Pass 2: Extended columns from later migrations ──────────────────
-            // full_name, skills, badges were added via ALTER TABLE migrations.
-            // If the columns don't exist yet (PGRST204), skip silently — no alert.
-            const extUpdates: Record<string, unknown> = {
+            // Build one unified update payload.
+            // Always include skills and badges so clearing them is also persisted.
+            const updatePayload: Record<string, unknown> = {
+                display_name: formData.full_name,
                 full_name: formData.full_name,
+                bio: formData.bio,
+                skills: formData.skills,
+                badges: formData.badges,
+                updated_at: new Date().toISOString(),
             };
-            if (formData.skills.length > 0) extUpdates.skills = formData.skills;
-            if (formData.badges.length > 0) extUpdates.badges = formData.badges;
 
-            const { error: extErr } = await (supabase.from('users') as any)
-                .update(extUpdates)
+            const { error: saveErr } = await (supabase.from('users') as any)
+                .update(updatePayload)
                 .eq('id', profile.id);
 
-            if (extErr && extErr.code !== 'PGRST204') {
-                console.warn('Extended fields save skipped:', extErr.message);
+            if (saveErr) {
+                // If the error is because extended columns don't exist yet,
+                // fall back to saving only the core fields (display_name, bio).
+                if (saveErr.code === 'PGRST204' || saveErr.message?.includes('column') || saveErr.message?.includes('does not exist')) {
+                    console.warn('Extended columns missing – saving core fields only:', saveErr.message);
+                    setExtColumnsAvailable(false);
+                    const { error: fallbackErr } = await (supabase.from('users') as any)
+                        .update({
+                            display_name: formData.full_name,
+                            bio: formData.bio,
+                            updated_at: new Date().toISOString(),
+                        })
+                        .eq('id', profile.id);
+                    if (fallbackErr) throw new Error(fallbackErr.message);
+                } else {
+                    throw new Error(saveErr.message);
+                }
             }
 
-            // ── Success ───────────────────────────────────────────────────────
+            // ── Optimistically update local state so UI reflects changes instantly ──
+            setProfile(prev => prev ? {
+                ...prev,
+                display_name: formData.full_name,
+                full_name: formData.full_name,
+                bio: formData.bio,
+                skills: formData.skills,
+                badges: formData.badges,
+            } : prev);
+
             setIsEditing(false);
-            await getProfile();
+
+            // Background re-fetch to sync any server-side computed fields
+            // Use silent mode to avoid showing full-page spinner
+            getProfile(true);
             const { triggerProfileRefresh } = useAuthStore.getState();
             triggerProfileRefresh();
 
@@ -663,14 +698,16 @@ export const ProfilePage = () => {
                                 Skills &amp; Expertise
                             </h3>
                             {isEditing ? (
-                                <input
-                                    className="w-full bg-zinc-950 border border-zinc-700 text-zinc-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                                    placeholder="React, TypeScript, Node.js…"
-                                    value={formData.skills.join(', ')}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, skills: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })
-                                    }
-                                />
+                                <>
+                                    <input
+                                        className="w-full bg-zinc-950 border border-zinc-700 text-zinc-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                                        placeholder="React, TypeScript, Node.js…"
+                                        value={formData.skills.join(', ')}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, skills: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })
+                                        }
+                                    />
+                                </>
                             ) : profile.skills?.length ? (
                                 <div className="flex flex-wrap gap-2">
                                     {profile.skills.map((s, i) => <SkillBadge key={s} label={s} index={i} />)}
@@ -691,14 +728,16 @@ export const ProfilePage = () => {
                                 Achievements
                             </h3>
                             {isEditing ? (
-                                <input
-                                    className="w-full bg-zinc-950 border border-zinc-700 text-zinc-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                                    placeholder="First Post, Top Contributor…"
-                                    value={formData.badges.join(', ')}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, badges: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })
-                                    }
-                                />
+                                <>
+                                    <input
+                                        className="w-full bg-zinc-950 border border-zinc-700 text-zinc-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                                        placeholder="First Post, Top Contributor…"
+                                        value={formData.badges.join(', ')}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, badges: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })
+                                        }
+                                    />
+                                </>
                             ) : profile.badges?.length ? (
                                 <div className="grid grid-cols-2 gap-3">
                                     {profile.badges.map((b, i) => <AchievementCard key={b} label={b} index={i} />)}
