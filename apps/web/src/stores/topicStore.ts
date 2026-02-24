@@ -165,11 +165,46 @@ export const useTopicStore = create<TopicStore>((set, get) => ({
                     t.id === topicId ? { ...t, reply_count: (t.reply_count || 0) + 1 } : t
                 ),
             }));
+
+            // ── Guaranteed client-side increment (works even without DB trigger) ──
+            const { useAuthStore } = await import('./authStore');
+            const { data: currentUser } = await supabase
+                .from('users')
+                .select('comments_count, points_earned, activity_stats')
+                .eq('id', userId)
+                .single();
+
+            const currentComments = (currentUser?.comments_count ?? 0) + 1;
+            const currentPoints = (currentUser?.points_earned ?? 0) + 5;
+            const currentStats = currentUser?.activity_stats ?? {};
+            const mergedStats = {
+                ...currentStats,
+                comments: ((currentStats as any)?.comments ?? 0) + 1,
+            };
+
+            const { error: updateError } = await supabase
+                .from('users')
+                .update({
+                    comments_count: currentComments,
+                    points_earned: currentPoints,
+                    activity_stats: mergedStats,
+                })
+                .eq('id', userId);
+
+            if (updateError) {
+                console.error('Error updating user stats:', updateError);
+            }
+            // Signal ProfilePage to re-fetch its local profile state from DB
+            useAuthStore.getState().triggerProfileRefresh();
+
         } catch (error) {
             console.error('Error creating reply:', error);
             throw error;
         }
     },
+
+
+
 
     deleteTopic: async (topicId) => {
         try {

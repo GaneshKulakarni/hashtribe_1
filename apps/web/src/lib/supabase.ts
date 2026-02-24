@@ -17,8 +17,12 @@ export interface Database {
                     id: string
                     username: string
                     display_name: string | null
+                    full_name: string | null
                     avatar_url: string | null
                     bio: string | null
+                    skills: string[]
+                    badges: string[]
+                    activity_stats: Json
                     created_at: string
                     updated_at: string
                 }
@@ -26,8 +30,12 @@ export interface Database {
                     id: string
                     username: string
                     display_name?: string | null
+                    full_name?: string | null
                     avatar_url?: string | null
                     bio?: string | null
+                    skills?: string[]
+                    badges?: string[]
+                    activity_stats?: Json
                     created_at?: string
                     updated_at?: string
                 }
@@ -35,15 +43,20 @@ export interface Database {
                     id?: string
                     username?: string
                     display_name?: string | null
+                    full_name?: string | null
                     avatar_url?: string | null
                     bio?: string | null
                     github_username?: string | null
                     github_id?: number | null
                     devcom_score?: number
+                    skills?: string[]
+                    badges?: string[]
+                    activity_stats?: Json
                     created_at?: string
                     updated_at?: string
                 }
             }
+
             tribes: {
                 Row: {
                     id: string

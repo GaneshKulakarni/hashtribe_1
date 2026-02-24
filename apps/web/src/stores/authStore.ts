@@ -4,6 +4,7 @@ import { supabase as supabaseClient } from '@/lib/supabase';
 const supabase = supabaseClient as any;
 import type { User, Session } from '@supabase/supabase-js';
 import type { UserProfile } from '@hashtribe/shared/types';
+import { GitHubService } from '@/services/githubService';
 
 interface AuthState {
     user: User | null;
@@ -11,6 +12,8 @@ interface AuthState {
     session: Session | null;
     loading: boolean;
     initialized: boolean;
+    // Increment this to tell ProfilePage to re-fetch fresh data from DB
+    profileRefreshKey: number;
 
     // Actions
     initialize: () => Promise<void>;
@@ -21,6 +24,7 @@ interface AuthState {
     signOut: () => Promise<void>;
     updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
     refreshSession: () => Promise<void>;
+    triggerProfileRefresh: () => void;
 }
 
 // Track if we're in the browser
@@ -32,7 +36,7 @@ class AuthSubscriptionManager {
     private subscription: any = null;
     private isSubscribed = false;
 
-    private constructor() {}
+    private constructor() { }
 
     static getInstance(): AuthSubscriptionManager {
         if (!AuthSubscriptionManager.instance) {
@@ -72,6 +76,7 @@ export const useAuthStore = create<AuthState>()(
             session: null,
             loading: true,
             initialized: false,
+            profileRefreshKey: 0,
 
             initialize: async () => {
                 // Don't initialize if already initialized
@@ -82,7 +87,7 @@ export const useAuthStore = create<AuthState>()(
 
                 try {
                     // First, try to refresh the session
-                    const { data: { session: refreshedSession }, error: refreshError } = 
+                    const { data: { session: refreshedSession }, error: refreshError } =
                         await supabase.auth.getSession();
 
                     if (refreshError) {
@@ -91,7 +96,7 @@ export const useAuthStore = create<AuthState>()(
                     }
 
                     let userProfile = null;
-                    
+
                     if (refreshedSession?.user) {
                         // Fetch user profile
                         const { data: profile, error: profileError } = await supabase
@@ -115,11 +120,16 @@ export const useAuthStore = create<AuthState>()(
                         initialized: true,
                     });
 
-                    // Set up auth state change listener
+                    // ── Set up auth state change listener ───────────────────────────────
+                    // Guard: track which user IDs have had their GitHub data synced this
+                    // session so we don't fire the heavy sync on every SIGNED_IN event
+                    // (which triggers on tab focus, token refresh, etc.)
+                    const githubSyncedForUser = new Set<string>();
+
                     const authManager = AuthSubscriptionManager.getInstance();
                     authManager.subscribe(async (event: string, session: Session | null) => {
                         console.log('Auth event:', event);
-                        
+
                         if (session?.user) {
                             // Fetch user profile
                             const { data: profile } = await supabase
@@ -149,6 +159,36 @@ export const useAuthStore = create<AuthState>()(
                                     }
                                 }, 1000);
                             }
+
+                            // ── GitHub sync: only once per user per session ──────────────────
+                            // SIGNED_IN fires on every token refresh/tab focus so we must guard
+                            const isGitHubUser = session.user.app_metadata?.provider === 'github';
+                            const alreadySynced = githubSyncedForUser.has(session.user.id);
+
+                            if (event === 'SIGNED_IN' && isGitHubUser && !alreadySynced) {
+                                githubSyncedForUser.add(session.user.id); // mark as syncing
+                                setTimeout(async () => {
+                                    try {
+                                        const githubService = GitHubService.getInstance();
+                                        const success = await githubService.updateUserProfileWithGitHubData();
+
+                                        if (success) {
+                                            // Refresh profile after GitHub enhancement
+                                            const { data: updatedProfile } = await supabase
+                                                .from('users')
+                                                .select('*')
+                                                .eq('id', session.user.id)
+                                                .single();
+
+                                            if (updatedProfile) {
+                                                set({ profile: updatedProfile });
+                                            }
+                                        }
+                                    } catch (syncErr) {
+                                        console.warn('GitHub sync failed (non-critical):', syncErr);
+                                    }
+                                }, 2000); // Wait 2 seconds for profile creation
+                            }
                         } else {
                             set({
                                 user: null,
@@ -159,24 +199,25 @@ export const useAuthStore = create<AuthState>()(
                         }
                     });
 
+
                 } catch (error) {
                     console.error('Error initializing auth:', error);
-                    set({ 
-                        user: null, 
-                        session: null, 
-                        profile: null, 
-                        loading: false, 
-                        initialized: true 
+                    set({
+                        user: null,
+                        session: null,
+                        profile: null,
+                        loading: false,
+                        initialized: true
                     });
                 }
             },
 
             refreshSession: async () => {
                 set({ loading: true });
-                
+
                 try {
                     const { data: { session }, error } = await supabase.auth.getSession();
-                    
+
                     if (error) {
                         console.error('Error refreshing session:', error);
                         throw error;
@@ -339,6 +380,12 @@ export const useAuthStore = create<AuthState>()(
 
                 set({ profile: data });
             },
+
+            // Call this from any store after an action that changes user metrics
+            // ProfilePage watches this key and re-fetches from DB when it changes
+            triggerProfileRefresh: () => {
+                set(state => ({ profileRefreshKey: state.profileRefreshKey + 1 }));
+            },
         }),
         {
             name: 'auth-storage',
@@ -354,7 +401,7 @@ export const useAuthStore = create<AuthState>()(
                     if (error) {
                         console.error('Error hydrating auth store:', error);
                     }
-                    
+
                     // Set loading to true when rehydrating
                     if (state) {
                         state.loading = true;
