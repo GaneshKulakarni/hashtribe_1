@@ -128,7 +128,7 @@ export function Header() {
                 </div>
             </header>
 
-            {/* Chat Drawer (rendered outside header for proper z-index stacking) */}
+            {/* Chat Drawer */}
             <ChatDrawer />
         </>
     );

@@ -16,10 +16,7 @@ export function MessageInput({ onSend, disabled = false }: MessageInputProps) {
         if (!trimmed || disabled) return;
         onSend(trimmed);
         setMessage('');
-        // Reset textarea height
-        if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto';
-        }
+        if (textareaRef.current) textareaRef.current.style.height = 'auto';
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -29,7 +26,6 @@ export function MessageInput({ onSend, disabled = false }: MessageInputProps) {
         }
     };
 
-    // Auto-resize textarea
     useEffect(() => {
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
@@ -42,7 +38,6 @@ export function MessageInput({ onSend, disabled = false }: MessageInputProps) {
     return (
         <div className="p-3 border-t border-charcoal-800 bg-black/60 backdrop-blur-sm" id="chat-message-input">
             <div className="flex items-end space-x-2">
-                {/* Attachment Button */}
                 <button
                     className="p-2 rounded-lg text-grey-500 hover:text-grey-300 hover:bg-charcoal-800 transition-colors flex-shrink-0 mb-0.5"
                     title="Attach file (coming soon)"
@@ -51,7 +46,6 @@ export function MessageInput({ onSend, disabled = false }: MessageInputProps) {
                     <Paperclip className="w-4 h-4" />
                 </button>
 
-                {/* Input Field */}
                 <div className="flex-1 relative">
                     <textarea
                         ref={textareaRef}
@@ -67,7 +61,6 @@ export function MessageInput({ onSend, disabled = false }: MessageInputProps) {
                     />
                 </div>
 
-                {/* Emoji Button */}
                 <button
                     className="p-2 rounded-lg text-grey-500 hover:text-grey-300 hover:bg-charcoal-800 transition-colors flex-shrink-0 mb-0.5"
                     title="Emoji (coming soon)"
@@ -76,7 +69,6 @@ export function MessageInput({ onSend, disabled = false }: MessageInputProps) {
                     <Smile className="w-4 h-4" />
                 </button>
 
-                {/* Send Button */}
                 <AnimatePresence mode="wait">
                     <motion.button
                         key={canSend ? 'active' : 'inactive'}
@@ -97,8 +89,6 @@ export function MessageInput({ onSend, disabled = false }: MessageInputProps) {
                     </motion.button>
                 </AnimatePresence>
             </div>
-
-            {/* Typing hint */}
             <p className="text-[10px] text-grey-600 mt-1.5 ml-12">
                 Press <kbd className="px-1 py-0.5 bg-charcoal-800 rounded text-grey-500 font-mono text-[10px]">Enter</kbd> to send · <kbd className="px-1 py-0.5 bg-charcoal-800 rounded text-grey-500 font-mono text-[10px]">Shift+Enter</kbd> for new line
             </p>
