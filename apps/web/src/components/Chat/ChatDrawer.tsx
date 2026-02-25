@@ -60,10 +60,9 @@ export function ChatDrawer() {
                                     <p className="text-[10px] text-grey-500 font-mono">HashTribe Messenger</p>
                                 </div>
                             </div>
-                            <button onClick={closeDrawer} className="p-2 rounded-lg text-grey-400 hover:text-white hover:bg-charcoal-800 transition-colors" id="chat-drawer-close">
+                            <button onClick={closeDrawer} aria-label="Close chat" className="p-2 rounded-lg text-grey-400 hover:text-white hover:bg-charcoal-800 transition-colors" id="chat-drawer-close">
                                 <X className="w-5 h-5" />
-                            </button>
-                        </div>
+                            </button>                        </div>
 
                         {/* Content */}
                         <div className="flex-1 overflow-hidden">

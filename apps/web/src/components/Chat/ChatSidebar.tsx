@@ -92,8 +92,9 @@ export function ChatSidebar() {
                     </div>
                     <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                         className="block w-full pl-9 pr-3 py-2 bg-charcoal-900 border border-charcoal-700 rounded-xl text-white text-xs placeholder-grey-600 focus:outline-none focus:border-grey-500 focus:ring-1 focus:ring-grey-500/30 transition-all font-mono"
-                        placeholder="Search conversations..." id="chat-search-input" />
-                </div>
+                        placeholder="Search conversations..."
+                        aria-label="Search conversations"
+                        id="chat-search-input" />                </div>
             </div>
             <div className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5">
                 {filteredConversations.length > 0 ? (
