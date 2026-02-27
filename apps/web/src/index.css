@@ -4,13 +4,82 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ========================================================
+   Theme CSS Custom Properties
+   ======================================================== */
+
+:root {
+  /* Light Mode (default when no .dark class) */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f9fafb;
+  --color-bg-tertiary: #f3f4f6;
+  --color-bg-elevated: #ffffff;
+  --color-bg-card: #ffffff;
+  --color-bg-sidebar: #f9fafb;
+  --color-bg-header: rgba(255, 255, 255, 0.85);
+  --color-bg-input: #f9fafb;
+  --color-bg-hover: #f3f4f6;
+  --color-bg-active: #e5e7eb;
+
+  --color-text-primary: #111827;
+  --color-text-secondary: #374151;
+  --color-text-tertiary: #6b7280;
+  --color-text-muted: #9ca3af;
+
+  --color-border-primary: #e5e7eb;
+  --color-border-secondary: #d1d5db;
+  --color-border-subtle: #f3f4f6;
+
+  --color-shadow: rgba(0, 0, 0, 0.08);
+  --color-shadow-lg: rgba(0, 0, 0, 0.12);
+
+  --autofill-bg: #f9fafb;
+  --autofill-text: #111827;
+}
+
+.dark {
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #0a0a0a;
+  --color-bg-tertiary: #1a1a1a;
+  --color-bg-elevated: #262626;
+  --color-bg-card: #171717;
+  --color-bg-sidebar: #000000;
+  --color-bg-header: rgba(0, 0, 0, 0.85);
+  --color-bg-input: #1a1a1a;
+  --color-bg-hover: #262626;
+  --color-bg-active: #383838;
+
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #e5e5e5;
+  --color-text-tertiary: #a3a3a3;
+  --color-text-muted: #737373;
+
+  --color-border-primary: #262626;
+  --color-border-secondary: #383838;
+  --color-border-subtle: #171717;
+
+  --color-shadow: rgba(0, 0, 0, 0.3);
+  --color-shadow-lg: rgba(0, 0, 0, 0.5);
+
+  --autofill-bg: #1a1a1a;
+  --autofill-text: #ffffff;
+}
+
 @layer base {
   * {
-    @apply border-charcoal-700;
+    @apply border-charcoal-700 dark:border-charcoal-700;
+  }
+
+  /* Light mode: use lighter border */
+  :not(.dark) * {
+    border-color: var(--color-border-primary);
   }
 
   body {
-    @apply bg-black text-white antialiased;
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    @apply antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   html {
@@ -22,37 +91,51 @@
 
   /* Button Styles */
   .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black;
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+    --tw-ring-offset-color: var(--color-bg-primary);
   }
 
   .btn-primary {
-    @apply btn bg-white text-black hover:bg-grey-100 focus:ring-white;
+    @apply btn bg-charcoal-900 text-white hover:bg-charcoal-800 dark:bg-white dark:text-black dark:hover:bg-grey-100 focus:ring-charcoal-900 dark:focus:ring-white;
   }
 
   .btn-secondary {
-    @apply btn bg-charcoal-800 text-white hover:bg-charcoal-700 focus:ring-charcoal-600;
+    @apply btn dark:bg-charcoal-800 dark:text-white dark:hover:bg-charcoal-700 bg-grey-100 text-charcoal-900 hover:bg-grey-200 focus:ring-charcoal-600;
   }
 
   .btn-ghost {
-    @apply btn bg-transparent text-grey-300 hover:bg-charcoal-800 hover:text-white;
+    @apply btn bg-transparent dark:text-grey-300 dark:hover:bg-charcoal-800 dark:hover:text-white text-grey-600 hover:bg-grey-100 hover:text-charcoal-900;
   }
 
   .btn-danger {
-    @apply btn bg-grey-600 text-white hover:bg-grey-700 focus:ring-grey-500;
+    @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
   }
 
   /* Card Styles */
   .card {
-    @apply bg-charcoal-900 border border-charcoal-800 rounded-xl p-6 shadow-lg;
+    background-color: var(--color-bg-card);
+    border-color: var(--color-border-primary);
+    box-shadow: 0 1px 3px var(--color-shadow);
+    @apply border rounded-xl p-6;
   }
 
   .card-hover {
-    @apply card transition-all duration-200 hover:border-charcoal-700 hover:shadow-xl;
+    @apply card transition-all duration-200;
+  }
+  .card-hover:hover {
+    border-color: var(--color-border-secondary);
+    box-shadow: 0 4px 12px var(--color-shadow-lg);
   }
 
   /* Input Styles */
   .input {
-    @apply w-full px-4 py-2 bg-charcoal-900 border border-charcoal-700 rounded-lg text-white placeholder-grey-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent transition-all;
+    background-color: var(--color-bg-input);
+    border-color: var(--color-border-secondary);
+    color: var(--color-text-primary);
+    @apply w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-charcoal-900 dark:focus:ring-white focus:border-transparent transition-all;
+  }
+  .input::placeholder {
+    color: var(--color-text-muted);
   }
 
   .textarea {
@@ -65,24 +148,25 @@
   }
 
   .badge-primary {
-    @apply badge bg-white/10 text-white border border-white/20;
+    @apply badge dark:bg-white/10 dark:text-white dark:border-white/20 bg-charcoal-900/10 text-charcoal-900 border border-charcoal-900/20;
   }
 
   .badge-success {
-    @apply badge bg-grey-900/50 text-grey-300 border border-grey-800;
+    @apply badge dark:bg-grey-900/50 dark:text-grey-300 dark:border-grey-800 bg-green-50 text-green-700 border border-green-200;
   }
 
   .badge-warning {
-    @apply badge bg-grey-800/50 text-grey-200 border border-grey-700;
+    @apply badge dark:bg-grey-800/50 dark:text-grey-200 dark:border-grey-700 bg-amber-50 text-amber-700 border border-amber-200;
   }
 
   .badge-danger {
-    @apply badge bg-charcoal-900/50 text-grey-300 border border-charcoal-800;
+    @apply badge dark:bg-charcoal-900/50 dark:text-grey-300 dark:border-charcoal-800 bg-red-50 text-red-700 border border-red-200;
   }
 
   /* Link Styles */
   .link {
-    @apply text-white hover:text-grey-300 transition-colors duration-150;
+    color: var(--color-text-primary);
+    @apply hover:opacity-75 transition-colors duration-150;
   }
 
   /* Container */
@@ -93,14 +177,46 @@
 
 @layer utilities {
   .text-gradient {
-    @apply bg-gradient-to-r from-white to-grey-300 bg-clip-text text-transparent;
+    @apply dark:from-white dark:to-grey-300 from-charcoal-900 to-charcoal-600 bg-gradient-to-r bg-clip-text text-transparent;
   }
 
   .bg-gradient-primary {
-    @apply bg-gradient-to-r from-white to-grey-100;
+    @apply dark:from-white dark:to-grey-100 from-charcoal-900 to-charcoal-700 bg-gradient-to-r;
+  }
+
+  /* Theme-aware text utilities */
+  .theme-text-primary {
+    color: var(--color-text-primary);
+  }
+  .theme-text-secondary {
+    color: var(--color-text-secondary);
+  }
+  .theme-text-tertiary {
+    color: var(--color-text-tertiary);
+  }
+  .theme-text-muted {
+    color: var(--color-text-muted);
+  }
+  .theme-bg-primary {
+    background-color: var(--color-bg-primary);
+  }
+  .theme-bg-secondary {
+    background-color: var(--color-bg-secondary);
+  }
+  .theme-bg-card {
+    background-color: var(--color-bg-card);
+  }
+  .theme-bg-elevated {
+    background-color: var(--color-bg-elevated);
+  }
+  .theme-border {
+    border-color: var(--color-border-primary);
   }
 }
 
+/* ========================================================
+   Autofill Styles (theme-aware)
+   ======================================================== */
 input:-webkit-autofill,
 input:-webkit-autofill:hover, 
 input:-webkit-autofill:focus, 
@@ -109,14 +225,16 @@ input:autofill,
 input:autofill:hover,
 input:autofill:focus,
 input:autofill:active {
-    /* Fix for Chrome/Safari/Edge */
-    -webkit-box-shadow: 0 0 0 30px #1a1a1a inset !important;
-    
-    /* Fix for Firefox & Future Standard */
-    box-shadow: 0 0 0 30px #1a1a1a inset !important;
-    
-    -webkit-text-fill-color: white !important;
-    color: white !important;
-    
+    -webkit-box-shadow: 0 0 0 30px var(--autofill-bg) inset !important;
+    box-shadow: 0 0 0 30px var(--autofill-bg) inset !important;
+    -webkit-text-fill-color: var(--autofill-text) !important;
+    color: var(--autofill-text) !important;
     transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ========================================================
+   Smooth theme transitions for key elements
+   ======================================================== */
+header, aside, nav, main, .card, .btn, .input, .badge {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
 }
