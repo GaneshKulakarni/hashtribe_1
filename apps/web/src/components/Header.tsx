@@ -2,7 +2,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
 import { useChatStore } from '@/stores/chatStore';
+import { useNotificationStore } from '@/stores/notificationStore';
 import { Bell, Search, Plus, MessageSquare, UserCircle, LogOut, Settings } from 'lucide-react';
+import { NotificationDropdown } from '@/components/NotificationDropdown';
 import { ChatDrawer } from '@/components/Chat';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -14,7 +16,10 @@ export function Header() {
     const { theme } = useThemeStore();
     const navigate = useNavigate();
     const { toggleDrawer } = useChatStore();
-    const unreadCount = useChatStore(state => state.conversations.reduce((total, c) => total + c.unreadCount, 0));
+    const unreadChatCount = useChatStore(state => state.conversations.reduce((total, c) => total + c.unreadCount, 0));
+
+    const { toggleDropdown, notifications } = useNotificationStore();
+    const unreadNotifCount = notifications.filter(n => !n.isRead).length;
 
     const handleSignOut = async () => {
         await signOut();
@@ -80,19 +85,32 @@ export function Header() {
                                 id="chat-toggle-button"
                             >
                                 <MessageSquare className="w-5 h-5" />
-                                {unreadCount > 0 && (
+                                {unreadChatCount > 0 && (
                                     <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-charcoal-900 dark:bg-white text-white dark:text-black text-[10px] font-bold rounded-full flex items-center justify-center px-1 border-2 border-white dark:border-black">
-                                        {unreadCount > 9 ? '9+' : unreadCount}
+                                        {unreadChatCount > 9 ? '9+' : unreadChatCount}
                                     </span>
                                 )}
                             </button>
 
                             {/* Notifications */}
                             <div className="relative">
-                                <button className="p-2 rounded-lg text-grey-500 dark:text-grey-400 hover:text-charcoal-900 dark:hover:text-white hover:bg-grey-200 dark:hover:bg-charcoal-800 transition-colors">
+                                <button
+                                    onClick={toggleDropdown}
+                                    className="p-2 rounded-lg text-grey-500 dark:text-grey-400 hover:text-charcoal-900 dark:hover:text-white hover:bg-grey-200 dark:hover:bg-charcoal-800 transition-colors relative"
+                                    title="Notifications"
+                                    id="notification-bell-button"
+                                >
                                     <Bell className="w-5 h-5" />
+                                    {unreadNotifCount > 0 && (
+                                        <span className="absolute -top-0.5 -right-0.5">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-60" />
+                                            <span className="relative min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 border-2 border-white dark:border-black">
+                                                {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                                            </span>
+                                        </span>
+                                    )}
                                 </button>
-                                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-black"></span>
+                                <NotificationDropdown />
                             </div>
 
                             {/* User Profile */}
@@ -148,4 +166,3 @@ export function Header() {
         </>
     );
 }
-

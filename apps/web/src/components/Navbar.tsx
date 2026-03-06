@@ -1,6 +1,8 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
+import { useNotificationStore } from '@/stores/notificationStore';
+import { NotificationDropdown } from '@/components/NotificationDropdown';
 import { Bell, Search, LogOut, Trophy, Compass, LayoutGrid, Settings, UserCircle, Users } from 'lucide-react';
 import clsx from 'clsx';
 import { ReactNode } from 'react';
@@ -61,6 +63,8 @@ export function Navbar() {
     const { user, profile, signOut } = useAuthStore();
     const { theme } = useThemeStore();
     const navigate = useNavigate();
+    const { toggleDropdown, notifications } = useNotificationStore();
+    const unreadNotifCount = notifications.filter(n => !n.isRead).length;
 
     const handleSignOut = async () => {
         await signOut();
@@ -120,11 +124,18 @@ export function Navbar() {
                                         <Search className="w-5 h-5" />
                                     </IconButton>
                                     <div className="relative">
-                                        <IconButton>
+                                        <IconButton onClick={toggleDropdown}>
                                             <Bell className="w-5 h-5" />
                                         </IconButton>
-                                        {/* Notification Badge */}
-                                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-black"></span>
+                                        {unreadNotifCount > 0 && (
+                                            <span className="absolute -top-0.5 -right-0.5">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-60 pointer-events-none" />
+                                                <span className="relative min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 border-2 border-white dark:border-black pointer-events-none">
+                                                    {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                                                </span>
+                                            </span>
+                                        )}
+                                        <NotificationDropdown />
                                     </div>
                                 </div>
 
