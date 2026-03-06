@@ -20,6 +20,7 @@ import { HomePage } from './pages/HomePage';
 import { CompetitionsPage } from './pages/CompetitionsPage';
 import { CompetitionDetailPage } from './pages/CompetitionDetailPage';
 import { AdminAnalytics } from './pages/AdminAnalytics';
+import { NotificationsPage } from './pages/NotificationsPage';
 import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
@@ -144,6 +145,17 @@ function App() {
                                     <h1 className="text-3xl font-bold mb-4">Leaderboard</h1>
                                     <p className="text-grey-500 dark:text-dark-400 font-mono">Coming soon in Phase 1!</p>
                                 </div>
+                            </Layout>
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/notifications"
+                    element={
+                        <ProtectedRoute>
+                            <Layout>
+                                <NotificationsPage />
                             </Layout>
                         </ProtectedRoute>
                     }

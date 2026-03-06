@@ -128,8 +128,11 @@ export function Navbar() {
                                             <Bell className="w-5 h-5" />
                                         </IconButton>
                                         {unreadNotifCount > 0 && (
-                                            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 border-2 border-white dark:border-black pointer-events-none">
-                                                {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                                            <span className="absolute -top-0.5 -right-0.5">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-60 pointer-events-none" />
+                                                <span className="relative min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 border-2 border-white dark:border-black pointer-events-none">
+                                                    {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                                                </span>
                                             </span>
                                         )}
                                         <NotificationDropdown />
