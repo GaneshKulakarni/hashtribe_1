@@ -23,7 +23,8 @@ export function ReactionPicker({ userReaction, reactionsSummary, onSelect }: Rea
 
     const handleMouseEnter = () => {
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        timeoutRef.current = setTimeout(() => setShowPicker(true), 400); // 400ms hover delay
+        // Reduced delay to 200ms for more responsive feel
+        timeoutRef.current = setTimeout(() => setShowPicker(true), 200);
     };
 
     const handleMouseLeave = () => {
@@ -62,6 +63,7 @@ export function ReactionPicker({ userReaction, reactionsSummary, onSelect }: Rea
                                     onSelect(r.type);
                                     setShowPicker(false);
                                 }}
+                                onMouseDown={(e) => e.stopPropagation()} // Extra safety for quick clicks
                                 className={clsx(
                                     "p-2 rounded-full hover:bg-grey-100 dark:hover:bg-charcoal-700 transition-colors flex flex-col items-center gap-0.5 group",
                                     userReaction === r.type && "bg-grey-100 dark:bg-charcoal-700"
@@ -81,6 +83,7 @@ export function ReactionPicker({ userReaction, reactionsSummary, onSelect }: Rea
                     e.stopPropagation();
                     onSelect(userReaction || 'like');
                 }}
+                onMouseDown={(e) => e.stopPropagation()}
                 className={clsx(
                     "flex items-center gap-1.5 px-3 py-2 rounded-full transition-all duration-200 group/btn",
                     userReaction
@@ -97,10 +100,6 @@ export function ReactionPicker({ userReaction, reactionsSummary, onSelect }: Rea
                 <div className="flex -space-x-1.5 overflow-hidden">
                     {Object.entries(reactionsSummary)
                         .filter(([type, count]) => {
-                            // Show in summary only if:
-                            // 1. There is a count
-                            // 2. It's not the ONLY reaction (if it's the same as user's)
-                            // OR we just show ALL but the active one if we want to avoid redundancy
                             return count > 0 && type !== userReaction;
                         })
                         .slice(0, 3)

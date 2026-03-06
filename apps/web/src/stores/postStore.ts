@@ -49,7 +49,6 @@ export const usePostStore = create<PostStore>((set, get) => ({
     fetchPosts: async (tribeId, userId) => {
         set({ loading: true, error: null });
         try {
-            // STEP 1: Fetch raw posts
             const { data: rawPosts, error: postError } = await supabase
                 .from('posts')
                 .select('*')
@@ -62,21 +61,18 @@ export const usePostStore = create<PostStore>((set, get) => ({
                 return;
             }
 
-            // STEP 2: Fetch unique profiles for these posts
             const userIds = [...new Set(rawPosts.map((p: any) => p.user_id))];
             const { data: profiles } = await supabase
                 .from('profiles')
                 .select('id, username, display_name, avatar_url')
                 .in('id', userIds);
 
-            // STEP 3: Fetch tribe info
             const { data: tribeData } = await supabase
                 .from('tribes')
                 .select('id, name, slug, visibility')
                 .eq('id', tribeId)
                 .single();
 
-            // STEP 4: Manual Merge
             const profileMap = new Map(profiles?.map((p: any) => [p.id, p]));
 
             let posts: Post[] = rawPosts.map((p: any) => ({
@@ -88,7 +84,6 @@ export const usePostStore = create<PostStore>((set, get) => ({
                 reactions_summary: p.reactions_summary || {}
             }));
 
-            // STEP 5: Fetch user's own reactions if logged in
             if (userId) {
                 const postIds = posts.map(p => p.id);
                 const { data: reactions } = await supabase
@@ -118,7 +113,6 @@ export const usePostStore = create<PostStore>((set, get) => ({
     fetchFeed: async (userId) => {
         set({ loading: true, error: null });
         try {
-            // STEP 1: Fetch raw feed posts
             const { data: rawPosts, error: postError } = await supabase
                 .from('posts')
                 .select('*')
@@ -131,21 +125,18 @@ export const usePostStore = create<PostStore>((set, get) => ({
                 return;
             }
 
-            // STEP 2: Fetch unique user profiles
             const userIds = [...new Set(rawPosts.map((p: any) => p.user_id))];
             const { data: profiles } = await supabase
                 .from('profiles')
                 .select('id, username, display_name, avatar_url')
                 .in('id', userIds);
 
-            // STEP 3: Fetch unique tribes
             const tribeIds = [...new Set(rawPosts.map((p: any) => p.tribe_id))];
             const { data: tribes } = await supabase
                 .from('tribes')
                 .select('id, name, slug, visibility')
                 .in('id', tribeIds);
 
-            // STEP 4: Manual Merge
             const profileMap = new Map(profiles?.map((p: any) => [p.id, p]));
             const tribeMap = new Map(tribes?.map((t: any) => [t.id, t]));
 
@@ -158,7 +149,6 @@ export const usePostStore = create<PostStore>((set, get) => ({
                 reactions_summary: p.reactions_summary || {}
             }));
 
-            // STEP 5: Fetch user's own reactions
             if (userId) {
                 const postIds = posts.map(p => p.id);
                 const { data: reactions } = await supabase
@@ -189,15 +179,8 @@ export const usePostStore = create<PostStore>((set, get) => ({
         try {
             const { error } = await supabase
                 .from('posts')
-                .insert({
-                    tribe_id: tribeId,
-                    user_id: userId,
-                    content,
-                    image_urls: imageUrls
-                })
-                .select()
-                .single();
-
+                .insert({ tribe_id: tribeId, user_id: userId, content, image_urls: imageUrls })
+                .select().single();
             if (error) throw error;
             get().fetchPosts(tribeId, userId);
         } catch (error) {
@@ -219,6 +202,7 @@ export const usePostStore = create<PostStore>((set, get) => ({
     toggleReaction: async (postId, userId, reaction) => {
         const originalPosts = get().posts;
 
+        // Optimistic UI update
         set(state => {
             const posts = [...state.posts];
             const idx = posts.findIndex(p => p.id === postId);
@@ -250,6 +234,7 @@ export const usePostStore = create<PostStore>((set, get) => ({
         });
 
         try {
+            // FIX: Using correct parameter name 'reaction_type_name' to match RPC exactly
             const { error } = await supabase.rpc('toggle_post_reaction', {
                 target_post_id: postId,
                 target_user_id: userId,
@@ -259,7 +244,7 @@ export const usePostStore = create<PostStore>((set, get) => ({
             if (error) throw error;
         } catch (error: any) {
             console.error('Error toggling reaction:', error);
-            set({ posts: originalPosts });
+            set({ posts: originalPosts }); // Revert on failure
         }
     },
 
