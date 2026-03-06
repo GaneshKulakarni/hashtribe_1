@@ -43,10 +43,10 @@ function App() {
     // Show loading state while initializing
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-dark-950">
+            <div className="min-h-screen flex items-center justify-center bg-grey-50 dark:bg-black">
                 <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-dark-400 font-mono">Initializing HashTribe...</p>
+                    <div className="w-16 h-16 border-4 border-charcoal-900 dark:border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-grey-500 dark:text-dark-400 font-mono">Initializing HashTribe...</p>
                 </div>
             </div>
         );
@@ -141,8 +141,8 @@ function App() {
                         <ProtectedRoute>
                             <Layout>
                                 <div className="card text-center py-12">
-                                    <h1 className="text-3xl font-bold text-white mb-4">Leaderboard</h1>
-                                    <p className="text-dark-400 font-mono">Coming soon in Phase 1!</p>
+                                    <h1 className="text-3xl font-bold mb-4">Leaderboard</h1>
+                                    <p className="text-grey-500 dark:text-dark-400 font-mono">Coming soon in Phase 1!</p>
                                 </div>
                             </Layout>
                         </ProtectedRoute>
@@ -197,10 +197,10 @@ function App() {
                     path="*"
                     element={
                         <Layout>
-                            <div className="card text-center py-24 border border-charcoal-800 bg-zinc-900/20">
-                                <h1 className="text-6xl font-black text-white mb-4">404</h1>
-                                <p className="text-dark-400 mb-8 font-mono tracking-widest uppercase text-sm">Signal Lost: Page Not Found</p>
-                                <a href="/feed" className="bg-white text-black px-8 py-3 rounded-md font-bold hover:bg-zinc-200 transition-colors">
+                            <div className="card text-center py-24 border border-grey-200 dark:border-charcoal-800 bg-grey-100/50 dark:bg-zinc-900/20">
+                                <h1 className="text-6xl font-black mb-4">404</h1>
+                                <p className="text-grey-500 dark:text-dark-400 mb-8 font-mono tracking-widest uppercase text-sm">Signal Lost: Page Not Found</p>
+                                <a href="/feed" className="bg-charcoal-900 dark:bg-white text-white dark:text-black px-8 py-3 rounded-md font-bold hover:bg-charcoal-800 dark:hover:bg-zinc-200 transition-colors">
                                     Return to Feed
                                 </a>
                             </div>

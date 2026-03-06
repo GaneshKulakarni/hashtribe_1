@@ -1,9 +1,13 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
+import { useThemeStore } from '@/stores/themeStore';
 import { Bell, Search, LogOut, Trophy, Compass, LayoutGrid, Settings, UserCircle, Users } from 'lucide-react';
 import clsx from 'clsx';
 import { ReactNode } from 'react';
+import { ThemeToggle } from '@/components/ThemeToggle';
+
 import logoDark from '@/components/assets/logo_dark_croped.png';
+import logoLight from '@/components/assets/logo_light.png';
 
 // Reusable NavLink Component
 interface NavLinkProps {
@@ -22,11 +26,11 @@ function NavLink({ to, children, icon }: NavLinkProps) {
             className={clsx(
                 'flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
                 isActive
-                    ? 'bg-charcoal-800 text-white'
-                    : 'text-grey-400 hover:text-white hover:bg-charcoal-900 shadow-glow-sm'
+                    ? 'bg-grey-200 dark:bg-charcoal-800 text-charcoal-900 dark:text-white'
+                    : 'text-grey-500 dark:text-grey-400 hover:text-charcoal-900 dark:hover:text-white hover:bg-grey-100 dark:hover:bg-charcoal-900'
             )}
         >
-            {icon && <span className={clsx(isActive ? 'text-white' : 'text-grey-500 group-hover:text-white')}>{icon}</span>}
+            {icon && <span className={clsx(isActive ? 'text-charcoal-900 dark:text-white' : 'text-grey-500 dark:text-grey-500 group-hover:text-charcoal-900 dark:group-hover:text-white')}>{icon}</span>}
             <span>{children}</span>
         </Link>
     );
@@ -44,7 +48,7 @@ function IconButton({ onClick, children, className }: IconButtonProps) {
         <button
             onClick={onClick}
             className={clsx(
-                'p-2 rounded-lg text-grey-400 hover:text-white hover:bg-charcoal-800 transition-colors',
+                'p-2 rounded-lg text-grey-500 dark:text-grey-400 hover:text-charcoal-900 dark:hover:text-white hover:bg-grey-100 dark:hover:bg-charcoal-800 transition-colors',
                 className
             )}
         >
@@ -55,6 +59,7 @@ function IconButton({ onClick, children, className }: IconButtonProps) {
 
 export function Navbar() {
     const { user, profile, signOut } = useAuthStore();
+    const { theme } = useThemeStore();
     const navigate = useNavigate();
 
     const handleSignOut = async () => {
@@ -62,11 +67,12 @@ export function Navbar() {
         navigate('/login');
     };
 
+    const isDark = theme === 'dark';
     const displayName = profile?.display_name || profile?.username || user?.email?.split('@')[0] || 'User';
     const email = user?.email || '';
 
     return (
-        <nav className="sticky top-0 z-50 bg-black/80 backdrop-blur-xl border-b border-charcoal-800">
+        <nav className="sticky top-0 z-50 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-grey-200 dark:border-charcoal-800">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
 
@@ -75,11 +81,11 @@ export function Navbar() {
                         {/* Logo */}
                         <Link to="/" className="flex items-center space-x-3 group min-w-max">
                             <img
-                                src={logoDark}
+                                src={isDark ? logoDark : logoLight}
                                 alt="HashTribe"
                                 className="h-8 w-auto object-contain"
                             />
-                            <span className="text-xl font-bold text-white tracking-tight group-hover:opacity-90 transition-opacity">
+                            <span className="text-xl font-bold text-charcoal-900 dark:text-white tracking-tight group-hover:opacity-90 transition-opacity">
                                 HashTribe
                             </span>
                         </Link>
@@ -104,11 +110,12 @@ export function Navbar() {
                     </div>
 
                     {/* RIGHT SIDE: Actions + Profile */}
-                    <div className="flex items-center space-x-2 md:space-x-4">
+                    <div className="flex items-center space-x-2 md:space-x-3">
                         {user ? (
                             <>
                                 {/* Search & Notifications */}
-                                <div className="flex items-center border-r border-charcoal-800 pr-4 space-x-1">
+                                <div className="flex items-center border-r border-grey-200 dark:border-charcoal-800 pr-3 space-x-1">
+                                    <ThemeToggle />
                                     <IconButton>
                                         <Search className="w-5 h-5" />
                                     </IconButton>
@@ -117,7 +124,7 @@ export function Navbar() {
                                             <Bell className="w-5 h-5" />
                                         </IconButton>
                                         {/* Notification Badge */}
-                                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-black"></span>
+                                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-black"></span>
                                     </div>
                                 </div>
 
@@ -131,41 +138,41 @@ export function Navbar() {
                                             <img
                                                 src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${user.email || 'U'}&background=random`}
                                                 alt={profile?.username || 'User'}
-                                                className="w-10 h-10 rounded-full border-2 border-charcoal-700 group-hover:border-white transition-colors object-cover"
+                                                className="w-10 h-10 rounded-full border-2 border-grey-200 dark:border-charcoal-700 group-hover:border-charcoal-900 dark:group-hover:border-white transition-colors object-cover"
                                             />
                                             {/* Online Status Indicator */}
-                                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-black"></div>
+                                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-black"></div>
                                         </div>
                                     </Link>
 
                                     {/* Dropdown Menu (Hover) */}
-                                    <div className="absolute right-0 top-full mt-1 w-64 rounded-xl bg-charcoal-900 border border-charcoal-800 shadow-glow-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right z-50 overflow-hidden">
+                                    <div className="absolute right-0 top-full mt-1 w-64 rounded-xl bg-white dark:bg-charcoal-900 border border-grey-200 dark:border-charcoal-800 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right z-50 overflow-hidden">
 
                                         {/* Dropdown Header: Name & Email */}
-                                        <div className="px-4 py-3 border-b border-charcoal-800 bg-charcoal-950/50">
-                                            <p className="text-white font-bold text-sm truncate">{displayName}</p>
+                                        <div className="px-4 py-3 border-b border-grey-200 dark:border-charcoal-800 bg-grey-50 dark:bg-charcoal-950/50">
+                                            <p className="text-charcoal-900 dark:text-white font-bold text-sm truncate">{displayName}</p>
                                             <p className="text-grey-500 text-xs truncate">{email}</p>
                                         </div>
 
                                         <div className="py-1">
                                             <Link
                                                 to={profile ? `/profile/${profile.username}` : '#'}
-                                                className="flex items-center space-x-2 px-4 py-2.5 text-sm text-grey-200 hover:bg-charcoal-800 hover:text-white transition-colors"
+                                                className="flex items-center space-x-2 px-4 py-2.5 text-sm text-grey-600 dark:text-grey-200 hover:bg-grey-100 dark:hover:bg-charcoal-800 hover:text-charcoal-900 dark:hover:text-white transition-colors"
                                             >
                                                 <UserCircle className="w-4 h-4" />
                                                 <span>Profile</span>
                                             </Link>
                                             <Link
                                                 to="/settings"
-                                                className="flex items-center space-x-2 px-4 py-2.5 text-sm text-grey-200 hover:bg-charcoal-800 hover:text-white transition-colors"
+                                                className="flex items-center space-x-2 px-4 py-2.5 text-sm text-grey-600 dark:text-grey-200 hover:bg-grey-100 dark:hover:bg-charcoal-800 hover:text-charcoal-900 dark:hover:text-white transition-colors"
                                             >
                                                 <Settings className="w-4 h-4" />
                                                 <span>Settings</span>
                                             </Link>
-                                            <div className="border-t border-charcoal-800 my-1"></div>
+                                            <div className="border-t border-grey-200 dark:border-charcoal-800 my-1"></div>
                                             <button
                                                 onClick={handleSignOut}
-                                                className="w-full flex items-center space-x-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors text-left"
+                                                className="w-full flex items-center space-x-2 px-4 py-2.5 text-sm text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-300 transition-colors text-left"
                                             >
                                                 <LogOut className="w-4 h-4" />
                                                 <span>Sign Out</span>
@@ -175,12 +182,15 @@ export function Navbar() {
                                 </div>
                             </>
                         ) : (
-                            <Link
-                                to="/login"
-                                className="px-5 py-2.5 bg-white text-black text-sm font-bold rounded-lg hover:bg-grey-200 transition-all duration-200 shadow-glow-sm"
-                            >
-                                Sign In
-                            </Link>
+                            <div className="flex items-center space-x-3">
+                                <ThemeToggle />
+                                <Link
+                                    to="/login"
+                                    className="px-5 py-2.5 bg-charcoal-900 dark:bg-white text-white dark:text-black text-sm font-bold rounded-lg hover:bg-charcoal-800 dark:hover:bg-grey-200 transition-all duration-200 shadow-sm"
+                                >
+                                    Sign In
+                                </Link>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -188,3 +198,4 @@ export function Navbar() {
         </nav>
     );
 }
+
